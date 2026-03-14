@@ -1,0 +1,26 @@
+# --- BACKEND (Java/Gradle) ---
+backend/.gradle/
+backend/build/
+backend/bin/
+backend/nb-cache/
+backend/vcs-1/
+backend/buildOutputCleanup/
+*.class
+*.jar
+*.war
+
+# --- FRONTEND (React) ---
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# --- IDE & OS (Hệ điều hành và trình soạn thảo) ---
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
