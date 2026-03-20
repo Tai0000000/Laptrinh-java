@@ -31,16 +31,22 @@ public class User {
 
     private String phone;
 
+    @Column(name = "city", length = 100)
+    private String city;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, columnDefinition = "user_role")
     private UserRole role;
 
     @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private boolean active = true;
 
     @Column(name = "total_points", nullable = false)
+    @Builder.Default
     private int totalPoints = 0;
 
+    @Builder.Default
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
