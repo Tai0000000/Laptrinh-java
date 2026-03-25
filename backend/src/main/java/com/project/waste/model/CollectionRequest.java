@@ -1,81 +1,80 @@
 package com.project.waste.model;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
+import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;
+import com.project.waste.enums.CollectionStatus;
+import com.project.waste.enums.WasteType;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "collection_requests")
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
+@Builder
 public class CollectionRequest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "citizen_id", nullable = false)
-    private Long citizenId;
+    // ── Quan hệ ──────────────────────────────────────────────────
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "citizen_id", nullable = false)
+    private User citizen;
 
-    @Column(name = "enterprise_id")
-    private Long enterpriseId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "enterprise_id")
+    private Enterprise enterprise;
 
-    @Column(name = "collector_id")
-    private Long collectorId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_collector_id")
+    private User assignedCollector;
 
-    @Column(name = "waste_type", nullable = false)
-    private String wasteType;
-
-    @Column(columnDefinition = "TEXT")
-    private String description;
-
-    @Column(name = "image_url", nullable = false)
-    private String imageUrl;
-
-    @Column(nullable = false)
-    private Double latitude;
-
-    @Column(nullable = false)
-    private Double longitude;
-
+    // ── State Machine ──────────────────────────────────────────────
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "collection_status")
+    @Builder.Default
     private CollectionStatus status = CollectionStatus.PENDING;
 
-    @Version
-    private Long version;
+    // ── Waste Info ─────────────────────────────────────────────────
+    @Enumerated(EnumType.STRING)
+    @Column(name = "waste_type", nullable = false, columnDefinition = "waste_type")
+    private WasteType wasteType;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    private String description;
+
+    @Column(name = "photo_url")
+    private String photoUrl;
+
+    @Column(nullable = false, precision = 10, scale = 8)
+    private BigDecimal latitude;
+
+    @Column(nullable = false, precision = 11, scale = 8)
+    private BigDecimal longitude;
+
+    @Column(name = "address_text")
+    private String addressText;
+
+    @Column(name = "proof_image_url")
+    private String proofImageUrl;
+
+    @Column(name = "reject_reason")
+    private String rejectReason;
+
+    @Version
+    private Integer version;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    public CollectionRequest() {
-    }
-
-    public CollectionRequest(Long id, Long citizenId, Long enterpriseId, Long collectorId,
-                             String wasteType, String description, String imageUrl,
-                             Double latitude, Double longitude, CollectionStatus status) {
-        this.id = id;
-        this.citizenId = citizenId;
-        this.enterpriseId = enterpriseId;
-        this.collectorId = collectorId;
-        this.wasteType = wasteType;
-        this.description = description;
-        this.imageUrl = imageUrl;
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.status = status;
-    }
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public Long getCitizenId() { return citizenId; }
-    public void setCitizenId(Long citizenId) { this.citizenId = citizenId; }
+}
 
     public Long getEnterpriseId() { return enterpriseId; }
     public void setEnterpriseId(Long enterpriseId) { this.enterpriseId = enterpriseId; }
@@ -117,4 +116,6 @@ public class CollectionRequest {
         }
         this.status = newStatus;
     }
+=======
+>>>>>>> 6e211a7 (Edit and add các file model và repository)
 }

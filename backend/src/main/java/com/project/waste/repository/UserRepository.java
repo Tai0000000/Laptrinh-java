@@ -1,17 +1,34 @@
 package com.project.waste.repository;
 
 import com.project.waste.model.User;
+import com.project.waste.enums.UserRole;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByUsername(String username);
     Optional<User> findByEmail(String email);
-    Boolean existsByUsername(String username);
-    Boolean existsByEmail(String email);
-    List<User> findAllByOrderByTotalPointsDesc();
+    boolean existsByEmail(String email);
+    Page<User> findByRole(UserRole role, Pageable pageable);
+
+    @Query("SELECT u FROM User u WHERE u.role = 'CITIZEN' ORDER BY u.totalPoints DESC")
+    List<User> findTopCitizens(Pageable pageable);
+
+    @Query("SELECT u FROM User u WHERE u.role = 'CITIZEN' AND LOWER(u.city) LIKE LOWER(CONCAT('%', :city, '%')) ORDER BY u.totalPoints DESC")
+    List<User> findTopCitizensByCity(@Param("city") String city, Pageable pageable);
+
+    @Modifying
+    @Query("UPDATE User u SET u.totalPoints = u.totalPoints + :points WHERE u.id = :userId")
+    void addPoints(@Param("userId") Long userId, @Param("points") int points);
+
+    @Modifying
+    @Query("UPDATE User u SET u.active = :active WHERE u.id = :userId")
+    void setActive(@Param("userId") Long userId, @Param("active") boolean active);
+
+    long countByRole(UserRole role);
 }

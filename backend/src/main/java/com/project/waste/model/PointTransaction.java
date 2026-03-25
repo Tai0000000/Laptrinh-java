@@ -5,42 +5,34 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "complaints")
+@Table(name = "point_transactions")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class Complaint {
+public class PointTransaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "request_id", nullable = false)
-    private CollectionRequest request;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "citizen_id", nullable = false)
     private User citizen;
 
-    @Column(nullable = false)
-    private String description;
-
-    // OPEN, RESOLVED, DISMISSED
-    @Column(nullable = false)
-    @Builder.Default
-    private String status = "OPEN";
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "request_id")
+    private CollectionRequest request;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "resolved_by")
-    private User resolvedBy;
+    @JoinColumn(name = "rule_id")
+    private PointRule rule;
 
-    private String resolution;
+    @Column(nullable = false)
+    private int points;
+
+    private String reason;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
-
-    @Column(name = "resolved_at")
-    private LocalDateTime resolvedAt;
 }
