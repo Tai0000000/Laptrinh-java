@@ -13,10 +13,10 @@ import java.util.List;
 
 public interface CollectionRequestRepository extends JpaRepository<CollectionRequest, Long> {
 
-    Page<CollectionRequest> findByCitizenId(Long citizenId, Pageable pageable);
+    Page<CollectionRequest> findByCitizen_Id(Long citizenId, Pageable pageable);
     List<CollectionRequest> findByStatusOrderByCreatedAtAsc(CollectionStatus status);
-    Page<CollectionRequest> findByEnterpriseId(Long enterpriseId, Pageable pageable);
-    Page<CollectionRequest> findByAssignedCollectorId(Long collectorId, Pageable pageable);
+    Page<CollectionRequest> findByEnterprise_Id(Long enterpriseId, Pageable pageable);
+    Page<CollectionRequest> findByAssignedCollector_Id(Long collectorId, Pageable pageable);
 
     @Query("SELECT r FROM CollectionRequest r WHERE r.assignedCollector.id = :cid " +
            "AND r.status IN ('ASSIGNED', 'ON_THE_WAY') ORDER BY r.createdAt ASC")
@@ -40,7 +40,7 @@ public interface CollectionRequestRepository extends JpaRepository<CollectionReq
            "WHERE r.enterprise.id = :eid GROUP BY r.status")
     List<Object[]> countByStatusForEnterprise(@Param("eid") Long enterpriseId);
 
-    List<CollectionRequest> findByEnterpriseIdAndStatusOrderByCreatedAtAsc(
+    List<CollectionRequest> findByEnterprise_IdAndStatusOrderByCreatedAtAsc(
             Long enterpriseId, CollectionStatus status);
 
     @Query("SELECT r.status, COUNT(r) FROM CollectionRequest r GROUP BY r.status")

@@ -6,7 +6,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 import com.project.waste.enums.CollectionStatus;
 import com.project.waste.enums.WasteType;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -31,7 +30,7 @@ public class CollectionRequest {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_collector_id")
-    private User assignedCollector;
+    private Collector assignedCollector;
 
     // ── State Machine ──────────────────────────────────────────────
     @Enumerated(EnumType.STRING)
@@ -49,11 +48,11 @@ public class CollectionRequest {
     @Column(name = "photo_url")
     private String photoUrl;
 
-    @Column(nullable = false, precision = 10, scale = 8)
-    private BigDecimal latitude;
+    @Column(nullable = false)
+    private Double latitude;
 
-    @Column(nullable = false, precision = 11, scale = 8)
-    private BigDecimal longitude;
+    @Column(nullable = false)
+    private Double longitude;
 
     @Column(name = "address_text")
     private String addressText;
@@ -74,48 +73,67 @@ public class CollectionRequest {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-}
 
-    public Long getEnterpriseId() { return enterpriseId; }
-    public void setEnterpriseId(Long enterpriseId) { this.enterpriseId = enterpriseId; }
+    // Proxy methods phục vụ các query/service đang dùng dạng *Id (citizenId/enterpriseId/collectorId).
+    // Mục tiêu: không cần load full relationship, chỉ cần set "stub entity" với id để JPA lưu đúng FK.
+    public Long getCitizenId() { return citizen != null ? citizen.getId() : null; }
 
-    public Long getCollectorId() { return collectorId; }
-    public void setCollectorId(Long collectorId) { this.collectorId = collectorId; }
+    public void setCitizenId(Long citizenId) {
+        if (citizenId == null) {
+            this.citizen = null;
+            return;
+        }
+        User u = new User();
+        u.setId(citizenId);
+        this.citizen = u;
+    }
 
-    public String getWasteType() { return wasteType; }
-    public void setWasteType(String wasteType) { this.wasteType = wasteType; }
+    public Long getEnterpriseId() { return enterprise != null ? enterprise.getId() : null; }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public void setEnterpriseId(Long enterpriseId) {
+        if (enterpriseId == null) {
+            this.enterprise = null;
+            return;
+        }
+        Enterprise e = new Enterprise();
+        e.setId(enterpriseId);
+        this.enterprise = e;
+    }
 
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public Long getCollectorId() { return assignedCollector != null ? assignedCollector.getId() : null; }
 
-    public Double getLatitude() { return latitude; }
-    public void setLatitude(Double latitude) { this.latitude = latitude; }
+    public void setCollectorId(Long collectorId) {
+        if (collectorId == null) {
+            this.assignedCollector = null;
+            return;
+        }
+        Collector c = new Collector();
+        c.setId(collectorId);
+        this.assignedCollector = c;
+    }
 
-    public Double getLongitude() { return longitude; }
-    public void setLongitude(Double longitude) { this.longitude = longitude; }
-
-    public CollectionStatus getStatus() { return status; }
-
-    public Long getVersion() { return version; }
-    public void setVersion(Long version) { this.version = version; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    /**
+     * Setter giúp service/controller truyền `wasteType` dạng String.
+     * Nếu truyền trực tiếp WasteType thì Lombok sẽ sinh setter tương ứng.
+     */
+    public void setWasteType(String wasteType) {
+        if (wasteType == null) {
+            this.wasteType = null;
+            return;
+        }
+        this.wasteType = WasteType.valueOf(wasteType);
+    }
 
     /**
      * Chuyển đổi trạng thái một cách an toàn (dùng canTransitionTo của CollectionStatus).
      */
     public void transitionTo(CollectionStatus newStatus) {
-        if (this.status == null || !this.status.canTransitionTo(newStatus)) {
-            throw new IllegalStateException(
-                "Không thể chuyển trạng thái từ " + this.status + " sang " + newStatus
-            );
+        if (newStatus == null || this.status == null) {
+            throw new IllegalStateException("Trạng thái hiện tại hoặc trạng thái mới không hợp lệ");
+        }
+        if (!this.status.canTransitionTo(newStatus)) {
+            throw new IllegalStateException("Không thể chuyển trạng thái từ " + this.status + " sang " + newStatus);
         }
         this.status = newStatus;
     }
-=======
->>>>>>> 6e211a7 (Edit and add các file model và repository)
 }
