@@ -14,7 +14,10 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
+    Optional<User> findByUsername(String username);
+    boolean existsByUsername(String username);
     Page<User> findByRole(UserRole role, Pageable pageable);
+    List<User> findAllByOrderByTotalPointsDesc();
 
     @Query("SELECT u FROM User u WHERE u.role = 'CITIZEN' ORDER BY u.totalPoints DESC")
     List<User> findTopCitizens(Pageable pageable);

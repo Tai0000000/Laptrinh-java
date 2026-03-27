@@ -1,7 +1,6 @@
 package com.project.waste.service; //Task 10: Hoang Kha
 
 import com.project.waste.model.Complaint;
-import com.project.waste.model.ComplaintStatus;
 import com.project.waste.model.PointHistory;
 import com.project.waste.model.User;
 import com.project.waste.repository.ComplaintRepository;
@@ -46,7 +45,7 @@ public class CitizenService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
         //use orElseThroe check data in DB. Neu k co tra ve ham Throw
         Complaint complaint = Complaint.builder()
-                .user(user)
+                .citizen(user)
                 .title(title)
                 .content(content)
                 .build();

@@ -1,7 +1,7 @@
 package com.project.waste.service;
 
 import com.project.waste.dto.*;
-import com.project.waste.model.Role;
+import com.project.waste.enums.UserRole;
 import com.project.waste.model.User;
 import com.project.waste.repository.UserRepository;
 import com.project.waste.security.JwtUtils;
@@ -69,21 +69,28 @@ public class AuthService {
         User user = User.builder()
                 .username(signUpRequest.getUsername())
                 .email(signUpRequest.getEmail())
-                .password(encoder.encode(signUpRequest.getPassword()))
+                .passwordHash(encoder.encode(signUpRequest.getPassword()))
+                .fullName(signUpRequest.getUsername()) // Default to username if not provided
                 .build();
 
         String strRole = signUpRequest.getRole();
-        Role role;
+        UserRole role;
 
         if (strRole == null) {
-            role = Role.ROLE_USER;
+            role = UserRole.CITIZEN;
         } else {
             switch (strRole.toLowerCase()) {
                 case "admin":
-                    role = Role.ROLE_ADMIN;
+                    role = UserRole.ADMIN;
+                    break;
+                case "enterprise":
+                    role = UserRole.ENTERPRISE;
+                    break;
+                case "collector":
+                    role = UserRole.COLLECTOR;
                     break;
                 default:
-                    role = Role.ROLE_USER;
+                    role = UserRole.CITIZEN;
             }
         }
 

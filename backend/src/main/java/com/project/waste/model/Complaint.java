@@ -24,7 +24,10 @@ public class Complaint {
     private User citizen;
 
     @Column(nullable = false)
-    private String description;
+    private String title;
+
+    @Column(nullable = false)
+    private String content;
 
     // OPEN, RESOLVED, DISMISSED
     @Column(nullable = false)

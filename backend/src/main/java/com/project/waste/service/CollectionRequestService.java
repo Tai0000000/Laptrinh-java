@@ -1,6 +1,7 @@
 package com.project.waste.service;
 
 import com.project.waste.event.CollectionCompletedEvent;
+import com.project.waste.model.Collector;
 import com.project.waste.model.Enterprise;
 import com.project.waste.model.CollectionRequest;
 import com.project.waste.model.RequestStatusHistory;
@@ -10,6 +11,7 @@ import com.project.waste.repository.EnterpriseRepository;
 import com.project.waste.repository.CollectorRepository;
 import com.project.waste.repository.RequestStatusHistoryRepository;
 import com.project.waste.repository.UserRepository;
+import com.project.waste.enums.WasteType;
 import com.project.waste.enums.CollectionStatus;
 import jakarta.persistence.OptimisticLockException;
 import org.springframework.context.ApplicationEventPublisher;
@@ -59,9 +61,9 @@ public class CollectionRequestService {
 
         request.setCitizen(citizen);
         request.setEnterprise(enterprise);
-        request.setWasteType(wasteType);
+        request.setWasteType(WasteType.valueOf(wasteType.toUpperCase()));
         request.setDescription(description);
-        request.setImageUrl(imageUrl);
+        request.setPhotoUrl(imageUrl); // In model it's photoUrl, not imageUrl
         request.setLatitude(latitude);
         request.setLongitude(longitude);
         CollectionRequest saved = collectionRequestRepository.save(request);

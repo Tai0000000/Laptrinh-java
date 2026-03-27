@@ -23,7 +23,7 @@ public class PointEventHandler {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user để cộng điểm!"));
 
         //Ham kiem tra gia tri diem trong data
-        int currentPoints = user.getTotalPoints() != null ? user.getTotalPoints() : 0; // ? true : false - ham IF-ELSE
+        int currentPoints = user.getTotalPoints(); 
         int newTotal = currentPoints + event.getPoints();
 
         user.setTotalPoints(newTotal);

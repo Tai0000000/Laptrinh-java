@@ -113,18 +113,6 @@ public class CollectionRequest {
     }
 
     /**
-     * Setter giúp service/controller truyền `wasteType` dạng String.
-     * Nếu truyền trực tiếp WasteType thì Lombok sẽ sinh setter tương ứng.
-     */
-    public void setWasteType(String wasteType) {
-        if (wasteType == null) {
-            this.wasteType = null;
-            return;
-        }
-        this.wasteType = WasteType.valueOf(wasteType);
-    }
-
-    /**
      * Chuyển đổi trạng thái một cách an toàn (dùng canTransitionTo của CollectionStatus).
      */
     public void transitionTo(CollectionStatus newStatus) {
