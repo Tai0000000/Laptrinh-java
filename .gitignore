@@ -1,6 +1,7 @@
-# --- BACKEND (Java/Gradle) ---
+# --- BACKEND (Java/Maven/Gradle) ---
 backend/.gradle/
 backend/build/
+backend/target/
 backend/bin/
 backend/nb-cache/
 backend/vcs-1/
