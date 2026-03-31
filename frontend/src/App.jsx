@@ -4,7 +4,6 @@ import Pagination from "./components/common/Pagination";
 import StatusTimeline from "./components/common/StatusTimeline";
 import ImageUpload from "./components/common/ImageUpload";
 
-
 // ── ENTERPRISE DASHBOARD ──────────────────────────────────────────────────────
 function EnterpriseDashboard() {
   const [tab,setTab]=useState("pending");
