@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axiosClient from '../api/axiosClient';
 import { useParams } from 'react-router-dom';
 import StatusTimeline from '../components/StatusTimeline';
+import AICheck from '../components/AICheck';
 
 export default function CitizenDashboard() {
   const { userId } = useParams();
@@ -74,6 +75,8 @@ export default function CitizenDashboard() {
       <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 16 }}>
         <h2 style={{ marginTop: 0, marginBottom: 12 }}>Citizen Dashboard</h2>
         <div style={{ marginBottom: 12, color: '#475569', fontSize: 13 }}>User ID: {userId}</div>
+
+        <AICheck />
 
         {loading ? <div>Đang tải...</div> : null}
         {error ? (
