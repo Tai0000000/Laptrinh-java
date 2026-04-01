@@ -5,7 +5,7 @@ import AdminDashboard from '../pages/AdminDashboard';
 const AppRoutes = () => {
     return (
         <Routes>
-            <Route path="/" element={<div>Home</div>} />
+            <Route path="/" element={<AdminDashboard />} />
             <Route path="/login" element={<div>Login</div>} />
             <Route path="/citizen/:userId" element={<CitizenDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />

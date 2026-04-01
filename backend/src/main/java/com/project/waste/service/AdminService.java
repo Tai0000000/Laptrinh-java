@@ -3,6 +3,8 @@ import com.project.waste.enums.UserRole;
 import com.project.waste.model.*;   
 import com.project.waste.repository.*;
 import com.project.waste.enums.CollectionStatus;
+import com.project.waste.exception.ResourceNotFoundException;
+import com.project.waste.exception.InvalidStateTransitionException;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;

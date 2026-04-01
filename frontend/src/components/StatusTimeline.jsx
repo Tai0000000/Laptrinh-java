@@ -10,7 +10,7 @@ const STATUS_LABELS = {
   CANCELLED: 'Đã hủy',
 };
 
-export default function StatusTimeline({ history }) {
+export default function StatusTimeline({ history, dark = false }) {
   const safeHistory = Array.isArray(history) ? history : [];
 
   const { statuses, timeByStatus } = useMemo(() => {
@@ -33,13 +33,13 @@ export default function StatusTimeline({ history }) {
   }, [safeHistory]);
 
   if (statuses.length === 0) {
-    return <div className="status-timeline">Chưa có dữ liệu trạng thái.</div>;
+    return <div style={{ color: dark ? '#666' : '#475569' }}>Chưa có dữ liệu trạng thái.</div>;
   }
 
   const currentStatus = statuses[statuses.length - 1];
 
   return (
-    <div className="status-timeline" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', position: 'relative' }}>
       {statuses.map((status, idx) => {
         const isDone = idx < statuses.length - 1;
         const isCurrent = status === currentStatus;
@@ -50,26 +50,46 @@ export default function StatusTimeline({ history }) {
           <div
             key={`${status}-${idx}`}
             style={{
-              display: 'grid',
-              gridTemplateColumns: '16px 1fr',
-              gap: 10,
-              alignItems: 'start',
+              display: 'flex',
+              gap: '16px',
+              alignItems: 'flex-start',
+              position: 'relative'
             }}
           >
+            {/* Line connector */}
+            {idx < statuses.length - 1 && (
+              <div style={{
+                position: 'absolute',
+                left: '6px',
+                top: '18px',
+                bottom: '-12px',
+                width: '2px',
+                background: isDone ? '#22c55e' : (dark ? '#1f1f1f' : '#e2e8f0'),
+                zIndex: 0
+              }} />
+            )}
+
             <div
               style={{
-                width: 12,
-                height: 12,
+                width: '14px',
+                height: '14px',
                 borderRadius: '50%',
-                background: isCurrent ? '#2563eb' : isDone ? '#16a34a' : '#cbd5e1',
-                marginTop: 6,
+                background: isCurrent ? '#22c55e' : isDone ? '#22c55e' : (dark ? '#1f1f1f' : '#cbd5e1'),
+                border: isCurrent ? `4px solid ${dark ? '#22c55e20' : '#22c55e40'}` : 'none',
+                boxSizing: 'content-box',
+                marginTop: '4px',
+                zIndex: 1
               }}
             />
             <div>
-              <div style={{ fontWeight: 700, color: isCurrent ? '#2563eb' : '#0f172a' }}>{label}</div>
+              <div style={{ 
+                fontWeight: '600', 
+                fontSize: '14px',
+                color: isCurrent ? '#22c55e' : (dark ? '#fff' : '#0f172a') 
+              }}>{label}</div>
               {changedAt ? (
-                <div style={{ color: '#475569', fontSize: 13 }}>
-                  Thời điểm: {new Date(changedAt).toLocaleString('vi-VN')}
+                <div style={{ color: '#666', fontSize: '12px', marginTop: '2px' }}>
+                  {new Date(changedAt).toLocaleString('vi-VN')}
                 </div>
               ) : null}
             </div>

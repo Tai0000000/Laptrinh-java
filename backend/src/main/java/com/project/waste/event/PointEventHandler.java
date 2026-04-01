@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-@Component// Thanh phan he thong
+@Component("simplePointEventHandler")// Thanh phan he thong
 public class PointEventHandler {
 
     @Autowired
