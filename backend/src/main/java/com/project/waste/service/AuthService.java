@@ -70,7 +70,11 @@ public class AuthService {
                 .username(signUpRequest.getUsername())
                 .email(signUpRequest.getEmail())
                 .passwordHash(encoder.encode(signUpRequest.getPassword()))
-                .fullName(signUpRequest.getUsername()) // Default to username if not provided
+                .fullName(signUpRequest.getFullName() != null ? signUpRequest.getFullName() : signUpRequest.getUsername())
+                .phone(signUpRequest.getPhone())
+                .city(signUpRequest.getCity())
+                .active(true)
+                .totalPoints(0)
                 .build();
 
         String strRole = signUpRequest.getRole();
