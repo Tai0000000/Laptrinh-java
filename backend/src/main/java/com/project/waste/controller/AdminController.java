@@ -50,6 +50,11 @@ public class AdminController {
         return ResponseEntity.ok(adminService.verifyEnterprise(enterpriseId));
     }
 
+    @PatchMapping("/enterprises/{enterpriseId}/reject")
+    public ResponseEntity<Enterprise> rejectEnterprise(@PathVariable Long enterpriseId) {
+        return ResponseEntity.ok(adminService.rejectEnterprise(enterpriseId));
+    }
+
     @GetMapping("/requests")
     public ResponseEntity<Page<CollectionRequest>> getAllRequests(
             @RequestParam(defaultValue = "0") int page) {

@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Users, 
-  Map as MapIcon, 
-  BarChart3, 
-  Settings, 
+import {
+  LayoutDashboard,
+  FileText,
+  Users,
+  Map as MapIcon,
+  BarChart3,
+  Settings,
   LogOut,
-  Leaf
+  Leaf,
+  MessageSquare,
+  Building2
 } from 'lucide-react';
 import AdminOverviewTab from '../components/AdminOverviewTab';
 import AdminRequestTab from '../components/AdminRequestTab';
 import AdminUserTab from '../components/AdminUserTab';
 import AdminComplaintTab from '../components/AdminComplaintTab';
+import AdminEnterpriseTab from '../components/AdminEnterpriseTab';
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('OVERVIEW');
@@ -20,7 +23,9 @@ export default function AdminDashboard() {
     const menuItems = [
         { id: 'OVERVIEW', label: 'Tổng quan', icon: <LayoutDashboard size={20} /> },
         { id: 'REQUESTS', label: 'Yêu cầu thu gom', icon: <FileText size={20} /> },
-        { id: 'COLLECTORS', label: 'Nhân viên thu gom', icon: <Users size={20} /> },
+        { id: 'COLLECTORS', label: 'Quản lý người dùng', icon: <Users size={20} /> },
+        { id: 'COMPLAINTS', label: 'Khiếu nại', icon: <MessageSquare size={20} /> },
+        { id: 'ENTERPRISES', label: 'Doanh nghiệp', icon: <Building2 size={20} /> },
         { id: 'MAP', label: 'Bản đồ', icon: <MapIcon size={20} /> },
         { id: 'STATS', label: 'Thống kê', icon: <BarChart3 size={20} /> },
         { id: 'SETTINGS', label: 'Cài đặt', icon: <Settings size={20} /> },
@@ -103,8 +108,10 @@ export default function AdminDashboard() {
                 {activeTab === 'OVERVIEW' && <AdminOverviewTab />}
                 {activeTab === 'REQUESTS' && <AdminRequestTab />}
                 {activeTab === 'COLLECTORS' && <AdminUserTab />}
+                {activeTab === 'COMPLAINTS' && <AdminComplaintTab />}
+                {activeTab === 'ENTERPRISES' && <AdminEnterpriseTab />}
                 {/* Fallback for other tabs */}
-                {!['OVERVIEW', 'REQUESTS', 'COLLECTORS'].includes(activeTab) && (
+                {!['OVERVIEW', 'REQUESTS', 'COLLECTORS','COMPLAINT','ENTERPRISES'].includes(activeTab) && (
                     <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
                         <h2>Đang phát triển tính năng {menuItems.find(m => m.id === activeTab)?.label}</h2>
                     </div>

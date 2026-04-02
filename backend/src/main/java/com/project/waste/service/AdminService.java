@@ -17,7 +17,6 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class AdminService {
-
     private final UserRepository userRepo;
     private final CollectionRequestRepository requestRepo;
     private final ComplaintRepository complaintRepo;
@@ -68,6 +67,14 @@ public class AdminService {
         Enterprise enterprise = enterpriseRepo.findById(enterpriseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Enterprise không tồn tại"));
         enterprise.setVerified(true);
+        return enterpriseRepo.save(enterprise);
+    }
+
+    @Transactional
+    public Enterprise rejectEnterprise(Long enterpriseId) {
+        Enterprise enterprise = enterpriseRepo.findById(enterpriseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Enterprise không tồn tại"));
+        enterprise.setVerified(false);
         return enterpriseRepo.save(enterprise);
     }
 
