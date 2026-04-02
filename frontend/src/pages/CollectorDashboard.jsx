@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CollectorTaskTab from '../components/CollectorTaskTab';
 import CollectorHistoryTab from '../components/CollectorHistoryTab';
+import { useAuth } from '../hooks/useAuth';
 
 export default function CollectorDashboard() {
     const [activeTab, setActiveTab] = useState('TASKS');
+    const navigate = useNavigate();
+    const { logout } = useAuth();
 
     return (
         <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
@@ -13,6 +17,7 @@ export default function CollectorDashboard() {
                 <ul style={{ listStyle: 'none', padding: 0, marginTop: '20px' }}>
                     <li onClick={() => setActiveTab('TASKS')} style={tabStyle(activeTab === 'TASKS')}>📋 Nhiệm vụ</li>
                     <li onClick={() => setActiveTab('HISTORY')} style={tabStyle(activeTab === 'HISTORY')}>✅ Lịch sử</li>
+                    <li onClick={() => { logout(); navigate('/login'); }} style={tabStyle(false)}>🚪 Đăng xuất</li>
                 </ul>
             </div>
 
