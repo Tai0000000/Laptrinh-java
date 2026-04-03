@@ -40,7 +40,7 @@ public class User implements UserDetails {
     private String city;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "user_role")
+    @Column(nullable = false, length = 20)
     private UserRole role;
 
     @Column(name = "is_active", nullable = false)

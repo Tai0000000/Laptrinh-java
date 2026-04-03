@@ -237,6 +237,7 @@ export default function LoginRegister() {
                                         <option value="CITIZEN">Người dân</option>
                                         <option value="ENTERPRISE">Doanh nghiệp</option>
                                         <option value="COLLECTOR">Nhân viên thu gom</option>
+                                        <option value="ADMIN">Quản trị viên</option>
                                     </select>
                                     <ChevronDown 
                                         size={18} 
