@@ -253,9 +253,15 @@ public class CollectionRequestService {
     public CollectionRequest startCollection(Long requestId, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        Collector collector = collectorRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("User is not a collector"));
 
         CollectionRequest request = collectionRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy yêu cầu id: " + requestId));
+
+        if (request.getCollectorId() == null || !request.getCollectorId().equals(collector.getId())) {
+            throw new IllegalArgumentException("Yêu cầu không được gán cho collector này");
+        }
 
         CollectionStatus fromStatus = request.getStatus();
         request.transitionTo(CollectionStatus.ON_THE_WAY);
@@ -277,9 +283,15 @@ public class CollectionRequestService {
     public CollectionRequest completeCollection(Long requestId, String username, String proofImageUrl) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        Collector collector = collectorRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("User is not a collector"));
 
         CollectionRequest request = collectionRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy yêu cầu id: " + requestId));
+
+        if (request.getCollectorId() == null || !request.getCollectorId().equals(collector.getId())) {
+            throw new IllegalArgumentException("Yêu cầu không được gán cho collector này");
+        }
 
         CollectionStatus fromStatus = request.getStatus();
         request.transitionTo(CollectionStatus.COLLECTED);

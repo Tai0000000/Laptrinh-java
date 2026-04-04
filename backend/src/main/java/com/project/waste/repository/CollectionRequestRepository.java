@@ -47,4 +47,6 @@ public interface CollectionRequestRepository extends JpaRepository<CollectionReq
     List<Object[]> globalCountByStatus();
 
     long countByStatus(CollectionStatus status);
+
+    List<CollectionRequest> findByStatusAndCreatedAtBefore(CollectionStatus status, LocalDateTime createdAt);
 }

@@ -61,6 +61,17 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getAllRequests(page));
     }
 
+    /**
+     * Hủy các yêu cầu PENDING quá hạn (theo {@code createdAt}), chuyển sang CANCELLED qua state machine.
+     */
+    @PostMapping("/requests/cancel-stale")
+    public ResponseEntity<Map<String, Integer>> cancelStaleRequests(
+            @RequestParam(defaultValue = "72") int hoursOld,
+            @AuthenticationPrincipal UserDetails ud) {
+        int cancelled = adminService.cancelStaleRequests(hoursOld, ud.getUsername());
+        return ResponseEntity.ok(Map.of("cancelled", cancelled));
+    }
+
     @GetMapping("/enterprises")
     public ResponseEntity<Page<Enterprise>> getAllEnterprises(
             @RequestParam(defaultValue = "0") int page) {

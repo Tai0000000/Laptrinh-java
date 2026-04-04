@@ -1,6 +1,6 @@
 package com.project.waste.service;
 import com.project.waste.enums.UserRole;
-import com.project.waste.model.*;   
+import com.project.waste.model.*;
 import com.project.waste.repository.*;
 import com.project.waste.enums.CollectionStatus;
 import com.project.waste.exception.ResourceNotFoundException;
@@ -21,6 +21,7 @@ public class AdminService {
     private final CollectionRequestRepository requestRepo;
     private final ComplaintRepository complaintRepo;
     private final EnterpriseRepository enterpriseRepo;
+    private final RequestStatusHistoryRepository requestStatusHistoryRepo;
 
     public Map<String, Object> getSystemOverview() {
         Map<String, Long> usersByRole = new LinkedHashMap<>();
@@ -95,7 +96,7 @@ public class AdminService {
     }
 
     @Transactional
-    public Complaint resolveComplaint(Long complaintId, String adminEmail,
+    public Complaint resolveComplaint(Long complaintId, String adminUsername,
                                        String resolution, boolean dismiss) {
         Complaint complaint = complaintRepo.findById(complaintId)
                 .orElseThrow(() -> new ResourceNotFoundException("Complaint không tồn tại"));
@@ -104,7 +105,7 @@ public class AdminService {
             throw new InvalidStateTransitionException("OPEN", complaint.getStatus() + " (already resolved)");
         }
 
-        User admin = userRepo.findByEmail(adminEmail)
+        User admin = userRepo.findByUsername(adminUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin không tồn tại"));
 
         complaint.setStatus(dismiss ? "DISMISSED" : "RESOLVED");
@@ -115,8 +116,45 @@ public class AdminService {
         return complaintRepo.save(complaint);
     }
 
+    /**
+     * Hủy các yêu cầu {@link CollectionStatus#PENDING} quá hạn (chưa được enterprise xử lý),
+     * dùng {@link CollectionRequest#transitionTo} để đảm bảo đúng state machine.
+     *
+     * @param hoursOld   số giờ tối thiểu kể từ {@code createdAt}
+     * @param adminUsername username đăng nhập (principal), dùng cho audit {@code RequestStatusHistory}
+     * @return số bản ghi đã chuyển sang {@link CollectionStatus#CANCELLED}
+     */
     @Transactional
-    public int cancelStaleRequests(int hoursOld) {
-        return 0;
+    public int cancelStaleRequests(int hoursOld, String adminUsername) {
+        if (hoursOld <= 0) {
+            throw new IllegalArgumentException("hoursOld phải > 0");
+        }
+        if (adminUsername == null || adminUsername.isBlank()) {
+            throw new IllegalArgumentException("adminUsername không hợp lệ");
+        }
+        User admin = userRepo.findByUsername(adminUsername.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Admin không tồn tại"));
+
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(hoursOld);
+        List<CollectionRequest> stale = requestRepo.findByStatusAndCreatedAtBefore(
+                CollectionStatus.PENDING, cutoff);
+
+        int count = 0;
+        for (CollectionRequest request : stale) {
+            CollectionStatus from = request.getStatus();
+            request.transitionTo(CollectionStatus.CANCELLED);
+            requestRepo.save(request);
+
+            RequestStatusHistory history = RequestStatusHistory.builder()
+                    .request(request)
+                    .fromStatus(from)
+                    .toStatus(CollectionStatus.CANCELLED)
+                    .changedBy(admin)
+                    .note("Admin cancelled stale PENDING request (older than " + hoursOld + "h)")
+                    .build();
+            requestStatusHistoryRepo.save(history);
+            count++;
+        }
+        return count;
     }
 }

@@ -1,6 +1,5 @@
 package com.project.waste.enums;
 
-
 public enum CollectionStatus {
     PENDING,
     ACCEPTED,
@@ -10,14 +9,19 @@ public enum CollectionStatus {
     COLLECTED,
     CANCELLED;
 
+    /**
+     * @param next trạng thái đích; {@code null} hoặc trùng trạng thái hiện tại → không hợp lệ
+     */
     public boolean canTransitionTo(CollectionStatus next) {
+        if (next == null || this == next) {
+            return false;
+        }
         return switch (this) {
-            case PENDING     -> next == ACCEPTED || next == REJECTED;
-            case ACCEPTED    -> next == ASSIGNED || next == CANCELLED;
-            case ASSIGNED    -> next == ON_THE_WAY;
-            case ON_THE_WAY  -> next == COLLECTED;
-            // Terminal states — không thể đổi tiếp
-            case COLLECTED, REJECTED, CANCELLED -> false;
+            case PENDING -> next == ACCEPTED || next == REJECTED || next == CANCELLED;
+            case ACCEPTED -> next == ASSIGNED || next == CANCELLED;
+            case ASSIGNED -> next == ON_THE_WAY || next == CANCELLED;
+            case ON_THE_WAY -> next == COLLECTED || next == CANCELLED;
+            case REJECTED, COLLECTED, CANCELLED -> false;
         };
     }
 }
