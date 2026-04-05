@@ -8,12 +8,18 @@ import org.springframework.web.client.RestTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class AIService {
 
     private static final Logger logger = LoggerFactory.getLogger(AIService.class);
+    private static final Pattern DATA_URL_PATTERN = Pattern.compile("^data:(.+?);base64,(.+)$");
 
     @Value("${gemini.api.key}")
     private String apiKey;
@@ -22,16 +28,21 @@ public class AIService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public AIClassificationResponse classifyWaste(String description, String imageUrl) {
+    public AIClassificationResponse classifyWaste(String description, String imageData) {
         if (apiKey == null || apiKey.isEmpty() || apiKey.equals("YOUR_GEMINI_API_KEY")) {
             return new AIClassificationResponse(WasteType.GENERAL, "0.0", "Lỗi: Chưa cấu hình Gemini API Key trong application.properties");
         }
+
+        String normalizedDescription = description != null && !description.isBlank()
+                ? description.trim()
+                : "Không có mô tả, hãy ưu tiên nhận diện từ hình ảnh.";
+
         try {
             String prompt = "Phân loại loại rác sau đây vào một trong các danh mục: ORGANIC, RECYCLABLE, HAZARDOUS, GENERAL, ELECTRONIC. " +
                     "Trả về kết quả theo định dạng: CATEGORY|CONFIDENCE|EXPLANATION. " +
                     "Trong đó: CATEGORY là tên danh mục viết hoa, CONFIDENCE là độ tin cậy (0-1), EXPLANATION là giải thích ngắn gọn bằng tiếng Việt. " +
                     "Ví dụ: ORGANIC|0.95|Đây là vỏ chuối, có thể phân hủy tự nhiên. " +
-                    "Mô tả: " + description;
+                    "Mô tả: " + normalizedDescription;
 
             Map<String, Object> requestBody = new HashMap<>();
             List<Map<String, Object>> contents = new ArrayList<>();
@@ -42,14 +53,18 @@ public class AIService {
             textPart.put("text", prompt);
             parts.add(textPart);
 
-            if (imageUrl != null && !imageUrl.isEmpty()) {
-                // If we had image processing capabilities, we'd add it here. 
-                // For now, we'll just include the image URL in the prompt if it's text-based, 
-                // or assume the AI can access it if the API supports it.
-                // Note: Standard Gemini API for images requires base64 or file upload, 
-                // but we can also just describe it or use a multimodal request if needed.
-                prompt += ". Hình ảnh: " + imageUrl;
-                textPart.put("text", prompt);
+            if (imageData != null && !imageData.isBlank()) {
+                Matcher matcher = DATA_URL_PATTERN.matcher(imageData.trim());
+                if (matcher.matches()) {
+                    Map<String, Object> imagePart = new HashMap<>();
+                    Map<String, Object> inlineData = new HashMap<>();
+                    inlineData.put("mime_type", matcher.group(1));
+                    inlineData.put("data", matcher.group(2));
+                    imagePart.put("inline_data", inlineData);
+                    parts.add(imagePart);
+                } else {
+                    textPart.put("text", prompt + ". Tham chiếu hình ảnh: " + imageData.trim());
+                }
             }
 
             content.put("parts", parts);
@@ -86,7 +101,6 @@ public class AIService {
                 WasteType type = WasteType.valueOf(parts[0].trim().toUpperCase());
                 return new AIClassificationResponse(type, parts[1].trim(), parts[2].trim());
             } else if (parts.length == 1) {
-                // Try to just find the WasteType in the string
                 for (WasteType type : WasteType.values()) {
                     if (result.toUpperCase().contains(type.name())) {
                         return new AIClassificationResponse(type, "0.5", "Kết quả từ AI: " + result);
