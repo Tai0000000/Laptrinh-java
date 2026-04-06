@@ -8,6 +8,7 @@ import com.project.waste.exception.InvalidStateTransitionException;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,16 +47,25 @@ public class AdminService {
         );
     }
 
-    public Page<User> getAllUsers(int page, int size) {
-        return userRepo.findAll(PageRequest.of(page, size, Sort.by("createdAt").descending()));
+    public Page<User> getAllUsers(String search, UserRole role, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        if (search != null && !search.isBlank()) {
+            if (role != null) {
+                return userRepo.findByRoleAndSearch(role, search.trim(), pageable);
+            }
+            return userRepo.findBySearch(search.trim(), pageable);
+        } else if (role != null) {
+            return userRepo.findByRole(role, pageable);
+        }
+        return userRepo.findAll(pageable);
     }
 
     public Page<User> getUsersByRole(UserRole role, int page) {
-        return userRepo.findByRole(role, PageRequest.of(page, 20, Sort.by("createdAt").descending()));
+        return getAllUsers(null, role, page, 20);
     }
 
     @Transactional
-    public User toggleUserActive(Long userId) {
+    public User toggleUserActive(@NonNull Long userId) {
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
         userRepo.setActive(userId, !user.isActive());
@@ -64,7 +74,7 @@ public class AdminService {
     }
 
     @Transactional
-    public Enterprise verifyEnterprise(Long enterpriseId) {
+    public Enterprise verifyEnterprise(@NonNull Long enterpriseId) {
         Enterprise enterprise = enterpriseRepo.findById(enterpriseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Enterprise không tồn tại"));
         enterprise.setVerified(true);
@@ -72,16 +82,28 @@ public class AdminService {
     }
 
     @Transactional
-    public Enterprise rejectEnterprise(Long enterpriseId) {
+    public Enterprise rejectEnterprise(@NonNull Long enterpriseId) {
         Enterprise enterprise = enterpriseRepo.findById(enterpriseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Enterprise không tồn tại"));
         enterprise.setVerified(false);
         return enterpriseRepo.save(enterprise);
     }
 
+    public Page<Enterprise> getAllEnterprises(String search, Boolean verified, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        if (search != null && !search.isBlank()) {
+            if (verified != null) {
+                return enterpriseRepo.findByVerifiedAndSearch(verified, search.trim(), pageable);
+            }
+            return enterpriseRepo.findBySearch(search.trim(), pageable);
+        } else if (verified != null) {
+            return enterpriseRepo.findByVerified(verified, pageable);
+        }
+        return enterpriseRepo.findAll(pageable);
+    }
+
     public Page<Enterprise> getAllEnterprises(int page) {
-        return enterpriseRepo.findAll(
-                PageRequest.of(page, 20, Sort.by("createdAt").descending()));
+        return getAllEnterprises(null, null, page, 20);
     }
 
     public Page<CollectionRequest> getAllRequests(int page) {
@@ -96,7 +118,7 @@ public class AdminService {
     }
 
     @Transactional
-    public Complaint resolveComplaint(Long complaintId, String adminUsername,
+    public Complaint resolveComplaint(@NonNull Long complaintId, String adminUsername,
                                        String resolution, boolean dismiss) {
         Complaint complaint = complaintRepo.findById(complaintId)
                 .orElseThrow(() -> new ResourceNotFoundException("Complaint không tồn tại"));
@@ -152,7 +174,7 @@ public class AdminService {
                     .changedBy(admin)
                     .note("Admin cancelled stale PENDING request (older than " + hoursOld + "h)")
                     .build();
-            requestStatusHistoryRepo.save(history);
+            requestStatusHistoryRepo.save(Objects.requireNonNull(history));
             count++;
         }
         return count;

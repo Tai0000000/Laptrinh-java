@@ -3,53 +3,55 @@ import axiosClient from '../api/axiosClient';
 import StatusTimeline from './StatusTimeline';
 import { Search, Filter, Calendar, MapPin, Tag, User as UserIcon, FileText, Image as ImageIcon } from 'lucide-react';
 
+const MOCK_REQUESTS = [
+    {
+        id: 1,
+        citizen: { fullName: "Nguyễn Văn A", phone: "090111222" },
+        enterprise: null,
+        assignedCollector: null,
+        status: "PENDING",
+        wasteType: "ORGANIC",
+        description: "Rác sinh hoạt gia đình, khoảng 2 túi nilon to.",
+        addressText: "123 Lê Lợi, Phường Bến Nghé, Quận 1, TP.HCM",
+        latitude: 10.7769,
+        longitude: 106.7009,
+        photoUrl: "https://placehold.co/400x300/1a1a1a/22c55e?text=Anh+Rac+Sinh+Hoat",
+        createdAt: "2026-04-02T08:30:00"
+    },
+    {
+        id: 2,
+        citizen: { fullName: "Trần Thị B", phone: "0988777666" },
+        enterprise: { companyName: "Công ty Môi Trường Xanh" },
+        assignedCollector: { fullName: "Nguyễn Văn Tài" },
+        status: "COLLECTING",
+        wasteType: "RECYCLABLE",
+        description: "Nhiều thùng carton và vỏ chai nhựa văn phòng.",
+        addressText: "Tòa nhà Bitexco, Quận 1, TP.HCM",
+        latitude: 10.7715,
+        longitude: 106.7042,
+        photoUrl: "https://placehold.co/400x300/1a1a1a/3b82f6?text=Anh+Giay+Thung",
+        createdAt: "2026-04-03T09:15:00"
+    },
+    {
+        id: 3,
+        citizen: { fullName: "Cửa hàng tiện lợi X", phone: "028333444" },
+        enterprise: { companyName: "Tập đoàn EcoCollect" },
+        assignedCollector: { fullName: "Võ Minh Khang" },
+        status: "COMPLETED",
+        wasteType: "HAZARDOUS",
+        description: "2 thùng pin cũ và bóng đèn huỳnh quang hỏng.",
+        addressText: "456 Nguyễn Thị Minh Khai, Quận 3, TP.HCM",
+        latitude: 10.7738,
+        longitude: 106.6896,
+        photoUrl: "https://placehold.co/400x300/1a1a1a/ef4444?text=Anh+Pin+Cu",
+        proofImageUrl: "https://placehold.co/400x300/1a1a1a/22c55e?text=Anh+Da+Gom+Xong",
+        createdAt: "2026-04-01T14:00:00"
+    }
+];
+
 export default function AdminRequestTab() {
-    const [requests, setRequests] = useState([
-        {
-            id: 1,
-            citizen: { fullName: "Nguyễn Văn A", phone: "090111222" },
-            enterprise: null,
-            assignedCollector: null,
-            status: "PENDING",
-            wasteType: "ORGANIC",
-            description: "Rác sinh hoạt gia đình, khoảng 2 túi nilon to.",
-            addressText: "123 Lê Lợi, Phường Bến Nghé, Quận 1, TP.HCM",
-            latitude: 10.7769,
-            longitude: 106.7009,
-            photoUrl: "https://placehold.co/400x300/1a1a1a/22c55e?text=Anh+Rac+Sinh+Hoat",
-            createdAt: "2026-04-02T08:30:00"
-        },
-        {
-            id: 2,
-            citizen: { fullName: "Trần Thị B", phone: "0988777666" },
-            enterprise: { companyName: "Công ty Môi Trường Xanh" },
-            assignedCollector: { fullName: "Nguyễn Văn Tài" },
-            status: "COLLECTING",
-            wasteType: "RECYCLABLE",
-            description: "Nhiều thùng carton và vỏ chai nhựa văn phòng.",
-            addressText: "Tòa nhà Bitexco, Quận 1, TP.HCM",
-            latitude: 10.7715,
-            longitude: 106.7042,
-            photoUrl: "https://placehold.co/400x300/1a1a1a/3b82f6?text=Anh+Giay+Thung",
-            createdAt: "2026-04-03T09:15:00"
-        },
-        {
-            id: 3,
-            citizen: { fullName: "Cửa hàng tiện lợi X", phone: "028333444" },
-            enterprise: { companyName: "Tập đoàn EcoCollect" },
-            assignedCollector: { fullName: "Võ Minh Khang" },
-            status: "COMPLETED",
-            wasteType: "HAZARDOUS",
-            description: "2 thùng pin cũ và bóng đèn huỳnh quang hỏng.",
-            addressText: "456 Nguyễn Thị Minh Khai, Quận 3, TP.HCM",
-            latitude: 10.7738,
-            longitude: 106.6896,
-            photoUrl: "https://placehold.co/400x300/1a1a1a/ef4444?text=Anh+Pin+Cu",
-            proofImageUrl: "https://placehold.co/400x300/1a1a1a/22c55e?text=Anh+Da+Gom+Xong",
-            createdAt: "2026-04-01T14:00:00"
-        }
-    ]);
-    const [selectedRequestId, setSelectedRequestId] = useState(null);
+    const [requests, setRequests] = useState(MOCK_REQUESTS);
+    const [selectedRequestId, setSelectedRequestId] = useState(MOCK_REQUESTS[0].id);
     const [statusHistory, setStatusHistory] = useState([
         { status: 'PENDING', updatedAt: '2026-04-01T08:30:00', note: 'Người dân đã gửi yêu cầu lên hệ thống.' },
         { status: 'COLLECTING', updatedAt: '2026-04-02T09:00:00', note: 'Nhân viên Tài đang di chuyển đến điểm thu gom.' },
@@ -60,6 +62,7 @@ export default function AdminRequestTab() {
 
     useEffect(() => {
         let cancelled = false;
+        /*
         setLoading(true);
         setError(null);
 
@@ -81,12 +84,14 @@ export default function AdminRequestTab() {
                 if (cancelled) return;
                 setLoading(false);
             })
+        */
         return () => { cancelled = true; };
     }, []);
 
     useEffect(() => {
-        if (!selectedRequestId) return;
+        if (!selectedRequestId || selectedRequestId > 3) return; // Chỉ mock history cho 3 id đầu
         let cancelled = false;
+        /*
         setError(null);
 
         axiosClient
@@ -99,6 +104,7 @@ export default function AdminRequestTab() {
                 if (cancelled) return;
                 setError(e?.response?.data?.message || "Không thể tải lịch sử trạng thái")
             })
+        */
         return () => { cancelled = true; };
     }, [selectedRequestId]);
 

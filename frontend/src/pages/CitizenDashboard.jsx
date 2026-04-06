@@ -199,13 +199,14 @@ export default function CitizenDashboard() {
     try {
       await axiosClient.post('/requests', {
         wasteType: newReport.wasteType,
-        latitude: newReport.latitude,
-        longitude: newReport.longitude,
+        latitude: Number(newReport.latitude),
+        longitude: Number(newReport.longitude),
         addressText: newReport.addressText,
         description: newReport.description,
         photoUrl: newReport.photoUrl
       });
 
+      alert("✅ Gửi yêu cầu thu gom thành công!");
       setNewReport({
         wasteType: 'ORGANIC',
         latitude: '10.7769',

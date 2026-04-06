@@ -72,13 +72,18 @@ public class AIService {
             requestBody.put("contents", contents);
 
             String url = GEMINI_API_URL + apiKey;
+            @SuppressWarnings("unchecked")
             Map<String, Object> response = restTemplate.postForObject(url, requestBody, Map.class);
 
             if (response != null && response.containsKey("candidates")) {
+                @SuppressWarnings("unchecked")
                 List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
                 if (!candidates.isEmpty()) {
+                    @SuppressWarnings("unchecked")
                     Map<String, Object> firstCandidate = candidates.get(0);
+                    @SuppressWarnings("unchecked")
                     Map<String, Object> contentRes = (Map<String, Object>) firstCandidate.get("content");
+                    @SuppressWarnings("unchecked")
                     List<Map<String, Object>> partsRes = (List<Map<String, Object>>) contentRes.get("parts");
                     if (!partsRes.isEmpty()) {
                         String result = (String) partsRes.get(0).get("text");

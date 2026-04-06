@@ -17,6 +17,9 @@ import AdminRequestTab from '../components/AdminRequestTab';
 import AdminUserTab from '../components/AdminUserTab';
 import AdminComplaintTab from '../components/AdminComplaintTab';
 import AdminEnterpriseTab from '../components/AdminEnterpriseTab';
+import AdminStatsTab from '../components/AdminStatsTab';
+import AdminMapTab from '../components/AdminMapTab';
+import AdminSettingsTab from '../components/AdminSettingsTab';
 import { useAuth } from '../hooks/useAuth';
 import { getPrimaryRole } from '../contexts/AuthContext';
 
@@ -110,8 +113,11 @@ export default function AdminDashboard() {
                 {activeTab === 'COLLECTORS' && <AdminUserTab />}
                 {activeTab === 'COMPLAINTS' && <AdminComplaintTab />}
                 {activeTab === 'ENTERPRISES' && <AdminEnterpriseTab />}
+                {activeTab === 'MAP' && <AdminMapTab />}
+                {activeTab === 'STATS' && <AdminStatsTab />}
+                {activeTab === 'SETTINGS' && <AdminSettingsTab />}
 
-                {!['OVERVIEW', 'REQUESTS', 'COLLECTORS', 'COMPLAINTS', 'ENTERPRISES'].includes(activeTab) && (
+                {!['OVERVIEW', 'REQUESTS', 'COLLECTORS', 'COMPLAINTS', 'ENTERPRISES', 'MAP', 'STATS', 'SETTINGS'].includes(activeTab) && (
                     <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
                         <h2>Đang phát triển tính năng {menuItems.find(m => m.id === activeTab)?.label}</h2>
                     </div>

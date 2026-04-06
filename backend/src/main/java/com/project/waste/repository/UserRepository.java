@@ -17,6 +17,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
     boolean existsByUsername(String username);
     Page<User> findByRole(UserRole role, Pageable pageable);
+
+    @Query("SELECT u FROM User u WHERE (LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+           "AND u.role = :role")
+    Page<User> findByRoleAndSearch(@Param("role") UserRole role, @Param("search") String search, Pageable pageable);
+
+    @Query("SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))")
+    Page<User> findBySearch(@Param("search") String search, Pageable pageable);
+
     List<User> findAllByOrderByTotalPointsDesc();
 
     @Query("SELECT u FROM User u WHERE u.role = 'CITIZEN' ORDER BY u.totalPoints DESC")

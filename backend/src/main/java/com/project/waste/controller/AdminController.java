@@ -28,9 +28,11 @@ public class AdminController {
 
     @GetMapping("/users")
     public ResponseEntity<Page<User>> getUsers(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) UserRole role,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(adminService.getAllUsers(page, size));
+        return ResponseEntity.ok(adminService.getAllUsers(search, role, page, size));
     }
 
     @GetMapping("/users/role/{role}")
@@ -74,8 +76,11 @@ public class AdminController {
 
     @GetMapping("/enterprises")
     public ResponseEntity<Page<Enterprise>> getAllEnterprises(
-            @RequestParam(defaultValue = "0") int page) {
-        return ResponseEntity.ok(adminService.getAllEnterprises(page));
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Boolean verified,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(adminService.getAllEnterprises(search, verified, page, size));
     }
 
     @GetMapping("/complaints")

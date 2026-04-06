@@ -17,9 +17,11 @@ import com.project.waste.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.IntStream;
 
 @Service
@@ -53,7 +55,7 @@ public class CitizenService {
         );
     }
 
-    public Integer getTotalPoints(Long userId) {
+    public Integer getTotalPoints(@NonNull Long userId) {
         return userRepository.findById(userId)
                 .map(User::getTotalPoints)
                 .orElse(0);
@@ -63,7 +65,7 @@ public class CitizenService {
         return findUserByUsername(username).getTotalPoints();
     }
 
-    public List<CitizenPointHistoryDto> getPointHistory(Long userId) {
+    public List<CitizenPointHistoryDto> getPointHistory(@NonNull Long userId) {
         return pointHistoryRepository.findAllByUserId(userId)
                 .stream()
                 .sorted((left, right) -> right.getCreatedAt().compareTo(left.getCreatedAt()))
@@ -96,7 +98,7 @@ public class CitizenService {
                 .toList();
     }
 
-    public List<CollectionRequestDto> getCitizenRequests(Long userId) {
+    public List<CollectionRequestDto> getCitizenRequests(@NonNull Long userId) {
         return collectionRequestRepository.findByCitizen_Id(
                         userId,
                         PageRequest.of(0, 50, Sort.by(Sort.Direction.DESC, "createdAt"))
@@ -140,7 +142,7 @@ public class CitizenService {
                 .content(request.getContent().trim())
                 .build();
 
-        return toComplaintDto(complaintRepository.save(complaint));
+        return toComplaintDto(complaintRepository.save(Objects.requireNonNull(complaint)));
     }
 
     private User findUserByUsername(String username) {

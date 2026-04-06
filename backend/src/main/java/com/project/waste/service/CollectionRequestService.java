@@ -12,7 +12,6 @@ import com.project.waste.repository.EnterpriseRepository;
 import com.project.waste.repository.CollectorRepository;
 import com.project.waste.repository.RequestStatusHistoryRepository;
 import com.project.waste.repository.UserRepository;
-import com.project.waste.enums.WasteType;
 import com.project.waste.enums.CollectionStatus;
 import jakarta.persistence.OptimisticLockException;
 import org.springframework.context.ApplicationEventPublisher;
@@ -20,12 +19,14 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.lang.NonNull;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class CollectionRequestService {
@@ -63,8 +64,11 @@ public class CollectionRequestService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy user: " + username));
         
         // Find an enterprise to assign to (for simplicity, just pick first or handle differently)
-        Enterprise enterprise = enterpriseRepository.findAll().stream().findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy enterprise nào trong hệ thống"));
+        // Note: In a real app, this might be based on service area
+        Enterprise enterprise = enterpriseRepository.findAll().stream()
+                .filter(Enterprise::isVerified)
+                .findFirst()
+                .orElse(null); // Allow enterprise to be null initially if no verified enterprise exists
 
         CollectionRequest request = CollectionRequest.builder()
                 .citizen(citizen)
@@ -72,13 +76,13 @@ public class CollectionRequestService {
                 .wasteType(dto.getWasteType())
                 .description(dto.getDescription())
                 .photoUrl(dto.getPhotoUrl())
-                .latitude(dto.getLatitude().doubleValue())
-                .longitude(dto.getLongitude().doubleValue())
+                .latitude(dto.getLatitude() != null ? dto.getLatitude().doubleValue() : 0.0)
+                .longitude(dto.getLongitude() != null ? dto.getLongitude().doubleValue() : 0.0)
                 .addressText(dto.getAddressText())
                 .status(CollectionStatus.PENDING)
                 .build();
                 
-        CollectionRequest saved = collectionRequestRepository.save(request);
+        CollectionRequest saved = collectionRequestRepository.save(Objects.requireNonNull(request));
 
         RequestStatusHistory history = RequestStatusHistory.builder()
                 .request(saved)
@@ -87,7 +91,7 @@ public class CollectionRequestService {
                 .changedBy(citizen)
                 .note("Initial request created via API")
                 .build();
-        requestStatusHistoryRepository.save(history);
+        requestStatusHistoryRepository.save(Objects.requireNonNull(history));
 
         return saved;
     }
@@ -110,7 +114,7 @@ public class CollectionRequestService {
         return collectionRequestRepository.findByEnterprise_IdAndStatusOrderByCreatedAtAsc(ent.getId(), CollectionStatus.ACCEPTED);
     }
 
-    public CollectionRequest acceptRequest(Long requestId, String username) {
+    public CollectionRequest acceptRequest(@NonNull Long requestId, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Enterprise ent = enterpriseRepository.findByOwnerId(user.getId())
@@ -130,7 +134,7 @@ public class CollectionRequestService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public CollectionRequest doAcceptRequest(Long requestId, Long enterpriseId) {
+    public CollectionRequest doAcceptRequest(@NonNull Long requestId, @NonNull Long enterpriseId) {
         CollectionRequest request = collectionRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy yêu cầu id: " + requestId));
 
@@ -152,13 +156,13 @@ public class CollectionRequestService {
                 .changedBy(changedBy)
                 .note("Enterprise accepted request")
                 .build();
-        requestStatusHistoryRepository.save(history);
+        requestStatusHistoryRepository.save(Objects.requireNonNull(history));
 
         return saved;
     }
 
     @Transactional
-    public CollectionRequest rejectRequest(Long requestId, String username, String reason) {
+    public CollectionRequest rejectRequest(@NonNull Long requestId, String username, String reason) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Enterprise ent = enterpriseRepository.findByOwnerId(user.getId())
@@ -183,13 +187,13 @@ public class CollectionRequestService {
                 .changedBy(user)
                 .note("Enterprise rejected request: " + reason)
                 .build();
-        requestStatusHistoryRepository.save(history);
+        requestStatusHistoryRepository.save(Objects.requireNonNull(history));
 
         return saved;
     }
 
     @Transactional
-    public CollectionRequest assignCollector(Long requestId, Long collectorId, String username) {
+    public CollectionRequest assignCollector(@NonNull Long requestId, @NonNull Long collectorId, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Enterprise ent = enterpriseRepository.findByOwnerId(user.getId())
@@ -220,7 +224,7 @@ public class CollectionRequestService {
                 .changedBy(user)
                 .note("Enterprise assigned collector")
                 .build();
-        requestStatusHistoryRepository.save(history);
+        requestStatusHistoryRepository.save(Objects.requireNonNull(history));
 
         return saved;
     }
@@ -250,7 +254,7 @@ public class CollectionRequestService {
     }
 
     @Transactional
-    public CollectionRequest startCollection(Long requestId, String username) {
+    public CollectionRequest startCollection(@NonNull Long requestId, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Collector collector = collectorRepository.findByUserId(user.getId())
@@ -274,13 +278,13 @@ public class CollectionRequestService {
                 .changedBy(user)
                 .note("Collector started collection")
                 .build();
-        requestStatusHistoryRepository.save(history);
+        requestStatusHistoryRepository.save(Objects.requireNonNull(history));
 
         return saved;
     }
 
     @Transactional
-    public CollectionRequest completeCollection(Long requestId, String username, String proofImageUrl) {
+    public CollectionRequest completeCollection(@NonNull Long requestId, String username, String proofImageUrl) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Collector collector = collectorRepository.findByUserId(user.getId())
@@ -305,7 +309,7 @@ public class CollectionRequestService {
                 .changedBy(user)
                 .note("Collector completed collection")
                 .build();
-        requestStatusHistoryRepository.save(history);
+        requestStatusHistoryRepository.save(Objects.requireNonNull(history));
 
         eventPublisher.publishEvent(new CollectionCompletedEvent(this, saved));
         return saved;

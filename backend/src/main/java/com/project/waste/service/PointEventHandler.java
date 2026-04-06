@@ -6,11 +6,14 @@ import com.project.waste.repository.*;
 import com.project.waste.event.RequestCollectedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.event.TransactionalEventListener;
+
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -25,7 +28,7 @@ public class PointEventHandler {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void onRequestCollected(RequestCollectedEvent event) {
+    public void onRequestCollected(@NonNull RequestCollectedEvent event) {
         log.info("Processing points for request={}, citizen={}",
                 event.getRequestId(), event.getCitizenId());
 
@@ -60,7 +63,7 @@ public class PointEventHandler {
                 .points(points)
                 .reason(reason)
                 .build();
-        pointTxRepo.save(tx);
+        pointTxRepo.save(Objects.requireNonNull(tx));
 
         // Cộng điểm atomic (UPDATE users SET total_points = total_points + ?)
         userRepo.addPoints(event.getCitizenId(), points);

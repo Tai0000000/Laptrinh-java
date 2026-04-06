@@ -4,9 +4,12 @@ import com.project.waste.model.PointEvent;
 import com.project.waste.model.User;
 import com.project.waste.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+
+import java.util.Objects;
 
 @Component("simplePointEventHandler")// Thanh phan he thong
 public class PointEventHandler {
@@ -16,10 +19,10 @@ public class PointEventHandler {
 
     // Event PointEven: Chi khi DB commit giao dich moi cong diem
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handlePointAddition(PointEvent event) {
+    public void handlePointAddition(@NonNull PointEvent event) {
 
         // Tim kiem nguoi dung
-        User user = userRepository.findById(event.getUserId())
+        User user = userRepository.findById(Objects.requireNonNull(event.getUserId()))
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user để cộng điểm!"));
 
         //Ham kiem tra gia tri diem trong data

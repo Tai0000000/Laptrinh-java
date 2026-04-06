@@ -4,6 +4,7 @@ import com.project.waste.enums.WasteType;
 import com.project.waste.model.*;
 import com.project.waste.service.EnterpriseService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,6 +25,22 @@ public class EnterpriseController {
     @GetMapping("/me")
     public ResponseEntity<Enterprise> getMyEnterprise(@AuthenticationPrincipal UserDetails ud) {
         return ResponseEntity.ok(enterpriseService.getMyEnterprise(ud.getUsername()));
+    }
+
+    @GetMapping("/complaints")
+    public ResponseEntity<Page<Complaint>> getComplaints(
+            @RequestParam(defaultValue = "0") int page,
+            @AuthenticationPrincipal UserDetails ud) {
+        return ResponseEntity.ok(enterpriseService.getMyComplaints(ud.getUsername(), page));
+    }
+
+    @PostMapping("/complaints/{complaintId}/resolve")
+    public ResponseEntity<Complaint> resolveComplaint(
+            @PathVariable Long complaintId,
+            @RequestBody Map<String, String> body,
+            @AuthenticationPrincipal UserDetails ud) {
+        return ResponseEntity.ok(enterpriseService.resolveComplaint(
+                ud.getUsername(), complaintId, body.get("resolution")));
     }
 
     @PostMapping("/register")

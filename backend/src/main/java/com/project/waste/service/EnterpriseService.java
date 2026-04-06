@@ -8,7 +8,9 @@ import com.project.waste.exception.ResourceNotFoundException;
 import com.project.waste.exception.DuplicateResourceException;
 import com.project.waste.exception.UnauthorizedActionException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,11 +26,35 @@ public class EnterpriseService {
     private final UserRepository userRepo;
     private final PointRuleRepository pointRuleRepo;
     private final CollectionRequestRepository requestRepo;
+    private final ComplaintRepository complaintRepo;
 
     public Enterprise getMyEnterprise(String ownerEmail) {
         User owner = findUser(ownerEmail);
         return enterpriseRepo.findByOwnerId(owner.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Enterprise chưa được tạo"));
+    }
+
+    public Page<Complaint> getMyComplaints(String ownerEmail, int page) {
+        Enterprise enterprise = getMyEnterprise(ownerEmail);
+        return complaintRepo.findByEnterpriseId(enterprise.getId(), PageRequest.of(page, 20));
+    }
+
+    @Transactional
+    public Complaint resolveComplaint(String ownerEmail, Long complaintId, String resolution) {
+        Enterprise enterprise = getMyEnterprise(ownerEmail);
+        Complaint complaint = complaintRepo.findById(complaintId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khiếu nại"));
+
+        if (!complaint.getRequest().getEnterprise().getId().equals(enterprise.getId())) {
+            throw new UnauthorizedActionException("Bạn không có quyền xử lý khiếu nại này");
+        }
+
+        complaint.setStatus("RESOLVED");
+        complaint.setResolution(resolution);
+        complaint.setResolvedBy(enterprise.getOwner());
+        complaint.setResolvedAt(LocalDateTime.now());
+
+        return complaintRepo.save(complaint);
     }
 
     @Transactional
@@ -39,18 +65,18 @@ public class EnterpriseService {
         if (enterpriseRepo.findByOwnerId(owner.getId()).isPresent()) {
             throw new DuplicateResourceException("Bạn đã có enterprise rồi");
         }
-        return enterpriseRepo.save(Enterprise.builder()
+        return enterpriseRepo.save(Objects.requireNonNull(Enterprise.builder()
                 .owner(owner)
                 .companyName(companyName)
                 .acceptedWasteTypes(acceptedWasteTypes)
                 .serviceArea(serviceArea)
                 .maxCapacityKg(maxCapacityKg)
                 .address(address)
-                .build());
+                .build()));
     }
 
     @Transactional
-    public void addCollector(String ownerEmail, Long collectorId) {
+    public void addCollector(String ownerEmail, @NonNull Long collectorId) {
         Enterprise enterprise = getMyEnterprise(ownerEmail);
         User collector = userRepo.findById(collectorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Collector không tồn tại"));
@@ -64,12 +90,12 @@ public class EnterpriseService {
 
         EnterpriseCollector.EnterpriseCollectorId id =
                 new EnterpriseCollector.EnterpriseCollectorId(enterprise.getId(), collectorId);
-        ecRepo.save(EnterpriseCollector.builder()
-                .id(id).enterprise(enterprise).collector(collector).build());
+        ecRepo.save(Objects.requireNonNull(EnterpriseCollector.builder()
+                .id(id).enterprise(enterprise).collector(collector).build()));
     }
 
     @Transactional
-    public void removeCollector(String ownerEmail, Long collectorId) {
+    public void removeCollector(String ownerEmail, @NonNull Long collectorId) {
         Enterprise enterprise = getMyEnterprise(ownerEmail);
         EnterpriseCollector.EnterpriseCollectorId id =
                 new EnterpriseCollector.EnterpriseCollectorId(enterprise.getId(), collectorId);
@@ -93,14 +119,14 @@ public class EnterpriseService {
         pointRuleRepo.findByEnterpriseIdAndWasteTypeAndActiveTrue(enterprise.getId(), wasteType)
                 .ifPresent(old -> { old.setActive(false); pointRuleRepo.save(old); });
 
-        return pointRuleRepo.save(PointRule.builder()
+        return pointRuleRepo.save(Objects.requireNonNull(PointRule.builder()
                 .enterprise(enterprise)
                 .wasteType(wasteType)
                 .basePoints(basePoints)
                 .bonusPoints(bonusPoints)
                 .bonusCondition(bonusCondition)
                 .active(true)
-                .build());
+                .build()));
     }
 
     public List<PointRule> getMyPointRules(String ownerEmail) {

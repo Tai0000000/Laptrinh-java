@@ -6,7 +6,10 @@ import {
   Leaf,
   LogOut,
   RefreshCcw,
-  Users
+  Users,
+  AlertTriangle,
+  MessageSquare,
+  CheckCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../api/axiosClient';
@@ -26,6 +29,23 @@ const cardStyle = {
   padding: '20px'
 };
 
+const statusColors = {
+  OPEN: { background: '#f59e0b20', color: '#fbbf24' },
+  RESOLVED: { background: '#22c55e20', color: '#4ade80' },
+  DISMISSED: { background: '#6b728020', color: '#9ca3af' }
+};
+
+const getBadgeStyle = (status) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '4px 8px',
+  borderRadius: '999px',
+  fontSize: '11px',
+  fontWeight: '600',
+  background: statusColors[status]?.background || '#1f293720',
+  color: statusColors[status]?.color || '#d1d5db'
+});
+
 export default function EnterpriseDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -33,6 +53,7 @@ export default function EnterpriseDashboard() {
   const [collectors, setCollectors] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [acceptedRequests, setAcceptedRequests] = useState([]);
+  const [complaints, setComplaints] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -41,12 +62,13 @@ export default function EnterpriseDashboard() {
     setLoading(true);
     setError(null);
 
-    const [enterpriseResult, collectorsResult, statsResult, pendingResult, acceptedResult] = await Promise.allSettled([
+    const [enterpriseResult, collectorsResult, statsResult, pendingResult, acceptedResult, complaintsResult] = await Promise.allSettled([
       axiosClient.get('/enterprise/me'),
       axiosClient.get('/enterprise/collectors'),
       axiosClient.get('/enterprise/stats'),
       axiosClient.get('/requests/pending'),
-      axiosClient.get('/requests/accepted')
+      axiosClient.get('/requests/accepted'),
+      axiosClient.get('/enterprise/complaints')
     ]);
 
     if (enterpriseResult.status === 'fulfilled') {
@@ -79,6 +101,12 @@ export default function EnterpriseDashboard() {
       setAcceptedRequests([]);
     }
 
+    if (complaintsResult.status === 'fulfilled') {
+      setComplaints(complaintsResult.value.data?.content || []);
+    } else {
+      setComplaints([]);
+    }
+
     const firstRejected = [
       enterpriseResult,
       collectorsResult,
@@ -104,6 +132,19 @@ export default function EnterpriseDashboard() {
       await loadDashboard();
     } catch (requestError) {
       alert(requestError?.response?.data?.message || 'Không thể nhận yêu cầu này');
+    }
+  };
+
+  const handleResolveComplaint = async (complaintId) => {
+    const resolution = window.prompt("Nhập nội dung phản hồi khiếu nại:");
+    if (!resolution) return;
+
+    try {
+      await axiosClient.post(`/enterprise/complaints/${complaintId}/resolve`, { resolution });
+      alert("Đã gửi phản hồi khiếu nại thành công");
+      await loadDashboard();
+    } catch (requestError) {
+      alert(requestError?.response?.data?.message || 'Không thể xử lý khiếu nại');
     }
   };
 
@@ -274,6 +315,43 @@ export default function EnterpriseDashboard() {
                   <div key={request.id} style={{ border: '1px solid #1f1f1f', borderRadius: '12px', padding: '14px 16px' }}>
                     <div style={{ fontWeight: '600' }}>#{request.id} · {request.wasteType}</div>
                     <div style={{ color: '#888', fontSize: '13px', marginTop: '4px' }}>{request.addressText || 'Chưa có địa chỉ'}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={sectionStyle}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0, fontSize: '20px' }}>Khiếu nại khách hàng</h2>
+                <AlertTriangle size={20} color="#f59e0b" />
+              </div>
+              <div style={{ display: 'grid', gap: '12px' }}>
+                {complaints.length === 0 && (
+                  <div style={{ color: '#666' }}>Chưa có khiếu nại nào từ khách hàng.</div>
+                )}
+                {complaints.map((complaint) => (
+                  <div key={complaint.id} style={{ background: '#0a0a0a', border: '1px solid #1f1f1f', borderRadius: '14px', padding: '16px', display: 'grid', gap: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <div style={{ fontWeight: '600', fontSize: '15px' }}>{complaint.title}</div>
+                        <div style={{ color: '#888', fontSize: '12px' }}>Yêu cầu #{complaint.requestId} • {complaint.citizen?.fullName}</div>
+                      </div>
+                      <span style={getBadgeStyle(complaint.status)}>{complaint.status === 'OPEN' ? 'Mới' : 'Đã xử lý'}</span>
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#ccc', lineHeight: '1.5' }}>{complaint.content}</div>
+                    {complaint.status === 'OPEN' ? (
+                      <button
+                        onClick={() => handleResolveComplaint(complaint.id)}
+                        style={{ background: '#22c55e20', color: '#22c55e', border: '1px solid #22c55e40', borderRadius: '8px', padding: '8px 12px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', width: 'fit-content', marginTop: '4px' }}
+                      >
+                        <MessageSquare size={14} />
+                        Phản hồi ngay
+                      </button>
+                    ) : (
+                      <div style={{ background: '#101a11', border: '1px solid #1d3521', borderRadius: '10px', padding: '10px 12px', fontSize: '13px', color: '#9ae6b4', marginTop: '4px' }}>
+                        <b>Phản hồi:</b> {complaint.resolution}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

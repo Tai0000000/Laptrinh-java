@@ -81,8 +81,59 @@ const StatCard = ({ title, value, subtitle, trend, icon, color, trendColor }) =>
   </div>
 );
 
+const MOCK_STATS = {
+    totalUsers: 1250,
+    usersByRole: {
+        'ADMIN': 3,
+        'CITIZEN': 1150,
+        'COLLECTOR': 85,
+        'ENTERPRISE': 12
+    },
+    totalRequests: 1456,
+    requestsByStatus: {
+        'PENDING': 23,
+        'ACCEPTED': 45,
+        'ASSIGNED': 32,
+        'ON_THE_WAY': 12,
+        'COLLECTED': 1344
+    },
+    openComplaints: 5,
+    totalEnterprises: 12
+};
+
 export default function AdminOverviewTab() {
+    const [stats, setStats] = useState(MOCK_STATS);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        // Tạm thời comment API để dùng dữ liệu mock theo yêu cầu của user
+        /*
+        setLoading(true);
+        axiosClient.get('/admin/overview')
+            .then(res => {
+                if (cancelled) return;
+                setStats(res.data);
+                setLoading(false);
+            })
+            .catch(err => {
+                if (cancelled) return;
+                setError("Không thể tải thông tin tổng quan");
+                setLoading(false);
+            });
+        */
+        return () => { cancelled = true; };
+    }, []);
+
+    if (loading) return <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>Đang tải dữ liệu...</div>;
+    if (error) return <div style={{ padding: '40px', textAlign: 'center', color: '#ef4444' }}>{error}</div>;
+
+    const requestsByStatus = stats?.requestsByStatus || {};
+    const totalRequests = stats?.totalRequests || 0;
+    const pendingRequests = requestsByStatus['PENDING'] || 0;
+    const collectingRequests = (requestsByStatus['ACCEPTED'] || 0) + (requestsByStatus['ASSIGNED'] || 0) + (requestsByStatus['ON_THE_WAY'] || 0);
+    const completedRequests = requestsByStatus['COLLECTED'] || 0;
 
     return (
         <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
@@ -93,20 +144,6 @@ export default function AdminOverviewTab() {
                     <p style={{ margin: '4px 0 0', color: '#666', fontSize: '14px' }}>Quản lý hoạt động thu gom rác thải</p>
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                    <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '8px', 
-                        background: '#111', 
-                        padding: '8px 16px', 
-                        borderRadius: '10px',
-                        border: '1px solid #1f1f1f',
-                        cursor: 'pointer',
-                        fontSize: '14px'
-                    }}>
-                        <span>Tất cả trạng thái</span>
-                        <ChevronDown size={16} color="#666" />
-                    </div>
                     <button style={{ 
                         display: 'flex', 
                         alignItems: 'center', 
@@ -130,135 +167,88 @@ export default function AdminOverviewTab() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
                 <StatCard 
                     title="Tổng yêu cầu" 
-                    value="1.456" 
+                    value={totalRequests.toLocaleString()} 
                     subtitle="Tất cả thời gian" 
                     icon={<FileText size={20} />} 
                     color="#22c55e" 
                 />
                 <StatCard 
                     title="Chờ xử lý" 
-                    value="23" 
-                    trend="12%" 
-                    subtitle="so với hôm qua" 
+                    value={pendingRequests.toLocaleString()} 
+                    subtitle="Chưa được chấp nhận" 
                     icon={<Clock size={20} />} 
                     color="#eab308" 
-                    trendColor="#ef4444"
                 />
                 <StatCard 
                     title="Đang thu gom" 
-                    value="12" 
+                    value={collectingRequests.toLocaleString()} 
                     subtitle="Đang thực hiện" 
                     icon={<Truck size={20} />} 
                     color="#3b82f6" 
                 />
                 <StatCard 
-                    title="Hoàn thành hôm nay" 
-                    value="47" 
-                    trend="+8%" 
-                    subtitle="so với hôm qua" 
+                    title="Đã hoàn thành" 
+                    value={completedRequests.toLocaleString()} 
+                    subtitle="Thành công" 
                     icon={<CheckCircle2 size={20} />} 
-                    color="#22c55e" 
-                    trendColor="#22c55e"
-                />
-                <StatCard 
-                    title="Tổng khối lượng" 
-                    value="2.340 kg" 
-                    subtitle="Tháng này" 
-                    icon={<Scale size={20} />} 
-                    color="#22c55e" 
-                />
-                <StatCard 
-                    title="Tỷ lệ tái chế" 
-                    value="68%" 
-                    trend="+3%" 
-                    subtitle="so với hôm qua" 
-                    icon={<Recycle size={20} />} 
-                    color="#22c55e" 
-                    trendColor="#22c55e"
+                    color="#10b981" 
                 />
             </div>
 
-            {/* Charts Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', height: '400px' }}>
-                {/* Bar Chart */}
-                <div style={{ background: '#111', borderRadius: '24px', padding: '24px', border: '1px solid #1f1f1f', display: 'flex', flexDirection: 'column' }}>
-                    <h3 style={{ margin: '0 0 24px', fontSize: '16px', fontWeight: '600' }}>Thu gom theo loại rác (tuần)</h3>
-                    <div style={{ flex: 1, width: '100%' }}>
+            {/* Content Section */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px' }}>
+                {/* Chart */}
+                <div style={{ background: '#111', borderRadius: '24px', padding: '24px', border: '1px solid #1f1f1f' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                        <h3 style={{ margin: 0, fontSize: '18px' }}>Xu hướng thu gom</h3>
+                        <div style={{ fontSize: '13px', color: '#666' }}>7 ngày qua</div>
+                    </div>
+                    <div style={{ height: '300px' }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={data} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1f1f1f" />
-                                <XAxis 
-                                    dataKey="name" 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{ fill: '#666', fontSize: 12 }} 
-                                    dy={10}
-                                />
-                                <YAxis 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{ fill: '#666', fontSize: 12 }} 
-                                />
+                            <BarChart data={data}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#1f1f1f" vertical={false} />
+                                <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
                                 <Tooltip 
-                                    contentStyle={{ background: '#111', border: '1px solid #1f1f1f', borderRadius: '8px' }}
+                                    contentStyle={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: '12px' }}
                                     itemStyle={{ fontSize: '12px' }}
                                 />
-                                <Legend 
-                                    verticalAlign="bottom" 
-                                    align="center" 
-                                    iconType="circle" 
-                                    iconSize={8}
-                                    wrapperStyle={{ paddingTop: '20px' }}
-                                />
-                                <Bar dataKey="recyclable" name="Tái chế" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={12} />
-                                <Bar dataKey="organic" name="Hữu cơ" fill="#f97316" radius={[4, 4, 0, 0]} barSize={12} />
-                                <Bar dataKey="hazardous" name="Nguy hại" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={12} />
-                                <Bar dataKey="general" name="Thông thường" fill="#06b6d4" radius={[4, 4, 0, 0]} barSize={12} />
+                                <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ paddingBottom: '20px' }} />
+                                <Bar dataKey="recyclable" name="Tái chế" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={8} />
+                                <Bar dataKey="organic" name="Hữu cơ" fill="#eab308" radius={[4, 4, 0, 0]} barSize={8} />
+                                <Bar dataKey="hazardous" name="Nguy hại" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={8} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* Map Placeholder */}
-                <div style={{ 
-                    background: '#111', 
-                    borderRadius: '24px', 
-                    padding: '24px', 
-                    border: '1px solid #1f1f1f', 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    position: 'relative',
-                    overflow: 'hidden'
-                }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Bản đồ thu gom</h3>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <div style={{ padding: '6px', background: '#1a1a1a', borderRadius: '8px', cursor: 'pointer' }}><Search size={16} color="#666" /></div>
-                            <div style={{ padding: '6px', background: '#1a1a1a', borderRadius: '8px', cursor: 'pointer' }}><ZoomIn size={16} color="#666" /></div>
-                            <div style={{ padding: '6px', background: '#1a1a1a', borderRadius: '8px', cursor: 'pointer' }}><ZoomOut size={16} color="#666" /></div>
-                            <div style={{ padding: '6px', background: '#1a1a1a', borderRadius: '8px', cursor: 'pointer' }}><Layers size={16} color="#666" /></div>
+                {/* Secondary Stats */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div style={{ background: '#111', borderRadius: '24px', padding: '24px', border: '1px solid #1f1f1f', flex: 1 }}>
+                        <h3 style={{ margin: 0, fontSize: '18px', marginBottom: '20px' }}>Phân bổ người dùng</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {stats?.usersByRole && Object.entries(stats.usersByRole).map(([role, count]) => (
+                                <div key={role} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div style={{ 
+                                        width: '8px', 
+                                        height: '8px', 
+                                        borderRadius: '50%', 
+                                        backgroundColor: role === 'ADMIN' ? '#ef4444' : (role === 'CITIZEN' ? '#22c55e' : '#3b82f6') 
+                                    }} />
+                                    <div style={{ flex: 1, fontSize: '14px' }}>{role}</div>
+                                    <div style={{ fontWeight: '600' }}>{count.toLocaleString()}</div>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                    
-                    <div style={{ 
-                        flex: 1, 
-                        background: '#0a0a0a', 
-                        borderRadius: '16px', 
-                        border: '1px solid #1f1f1f',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        position: 'relative',
-                        backgroundImage: 'radial-gradient(#1f1f1f 1px, transparent 1px)',
-                        backgroundSize: '20px 20px'
-                    }}>
-                        <div style={{ fontSize: '48px', fontWeight: '800', color: '#1a1a1a', letterSpacing: '4px' }}>TP.HCM</div>
-                        
-                        {/* Mock Map Markers */}
-                        <div style={{ position: 'absolute', top: '30%', left: '40%', color: '#22c55e' }}><MapIcon size={24} fill="currentColor" /></div>
-                        <div style={{ position: 'absolute', top: '50%', left: '60%', color: '#eab308' }}><MapIcon size={24} fill="currentColor" /></div>
-                        <div style={{ position: 'absolute', top: '70%', left: '30%', color: '#3b82f6' }}><MapIcon size={24} fill="currentColor" /></div>
-                        <div style={{ position: 'absolute', top: '40%', left: '70%', color: '#22c55e' }}><MapIcon size={24} fill="currentColor" /></div>
+
+                    <div style={{ background: '#22c55e10', borderRadius: '24px', padding: '24px', border: '1px solid #22c55e20' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                            <Scale size={20} color="#22c55e" />
+                            <h3 style={{ margin: 0, fontSize: '16px', color: '#22c55e' }}>Khiếu nại chưa xử lý</h3>
+                        </div>
+                        <div style={{ fontSize: '32px', fontWeight: '700', color: '#fff' }}>{stats?.openComplaints || 0}</div>
+                        <p style={{ margin: '8px 0 0', color: '#666', fontSize: '13px' }}>Cần Admin xử lý ngay để đảm bảo chất lượng dịch vụ</p>
                     </div>
                 </div>
             </div>
