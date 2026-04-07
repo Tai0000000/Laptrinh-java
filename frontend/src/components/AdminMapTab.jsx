@@ -12,19 +12,17 @@ const MOCK_REQUESTS = [
 
 export default function AdminMapTab() {
     const [requests, setRequests] = useState(MOCK_REQUESTS);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [search, setSearch] = useState("");
 
     useEffect(() => {
-        /*
         axiosClient.get('/admin/requests', { params: { size: 100 } })
             .then(res => {
                 setRequests(res.data.content || []);
                 setLoading(false);
             })
             .catch(() => setLoading(false));
-        */
     }, []);
 
     // Simple coordinate normalization for visualization

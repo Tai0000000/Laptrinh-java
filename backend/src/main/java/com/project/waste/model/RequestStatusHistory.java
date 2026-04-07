@@ -21,11 +21,11 @@ public class RequestStatusHistory {
     private CollectionRequest request;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "from_status", columnDefinition = "collection_status")
+    @Column(name = "from_status")
     private CollectionStatus fromStatus;  // null khi tạo mới
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "to_status", nullable = false, columnDefinition = "collection_status")
+    @Column(name = "to_status", nullable = false)
     private CollectionStatus toStatus;
 
     @ManyToOne(fetch = FetchType.LAZY)

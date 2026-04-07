@@ -21,7 +21,7 @@ public class PointRule {
     private Enterprise enterprise;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "waste_type", nullable = false, columnDefinition = "waste_type")
+    @Column(name = "waste_type", nullable = false)
     private WasteType wasteType;
 
     @Column(name = "base_points", nullable = false)

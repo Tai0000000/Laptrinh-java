@@ -140,15 +140,27 @@ public class EnterpriseService {
 
         Map<String, Long> byWasteType = new LinkedHashMap<>();
         requestRepo.countCollectedByWasteType(eid)
-                .forEach(row -> byWasteType.put(row[0].toString(), (Long) row[1]));
+                .forEach(row -> {
+                    if (row[0] != null && row[1] != null) {
+                        byWasteType.put(row[0].toString(), ((Number) row[1]).longValue());
+                    }
+                });
 
         Map<String, Long> byStatus = new LinkedHashMap<>();
         requestRepo.countByStatusForEnterprise(eid)
-                .forEach(row -> byStatus.put(row[0].toString(), (Long) row[1]));
+                .forEach(row -> {
+                    if (row[0] != null && row[1] != null) {
+                        byStatus.put(row[0].toString(), ((Number) row[1]).longValue());
+                    }
+                });
 
         Map<String, Long> byDay = new LinkedHashMap<>();
         requestRepo.countByDay(eid, LocalDateTime.now().minusDays(30))
-                .forEach(row -> byDay.put(row[0].toString(), (Long) row[1]));
+                .forEach(row -> {
+                    if (row[0] != null && row[1] != null) {
+                        byDay.put(row[0].toString(), ((Number) row[1]).longValue());
+                    }
+                });
 
         return Map.of(
                 "byWasteType", byWasteType,

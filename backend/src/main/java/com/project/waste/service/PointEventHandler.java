@@ -4,6 +4,7 @@ package com.project.waste.service;
 import com.project.waste.model.*;
 import com.project.waste.repository.*;
 import com.project.waste.event.RequestCollectedEvent;
+import com.project.waste.enums.WasteType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;

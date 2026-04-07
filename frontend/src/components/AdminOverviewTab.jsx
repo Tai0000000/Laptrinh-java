@@ -103,13 +103,11 @@ const MOCK_STATS = {
 
 export default function AdminOverviewTab() {
     const [stats, setStats] = useState(MOCK_STATS);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
         let cancelled = false;
-        // Tạm thời comment API để dùng dữ liệu mock theo yêu cầu của user
-        /*
         setLoading(true);
         axiosClient.get('/admin/overview')
             .then(res => {
@@ -122,7 +120,6 @@ export default function AdminOverviewTab() {
                 setError("Không thể tải thông tin tổng quan");
                 setLoading(false);
             });
-        */
         return () => { cancelled = true; };
     }, []);
 

@@ -86,7 +86,8 @@ public class AIService {
                     @SuppressWarnings("unchecked")
                     List<Map<String, Object>> partsRes = (List<Map<String, Object>>) contentRes.get("parts");
                     if (!partsRes.isEmpty()) {
-                        String result = (String) partsRes.get(0).get("text");
+                        Object textObj = partsRes.get(0).get("text");
+                        String result = textObj != null ? textObj.toString() : "";
                         return parseAIResult(result.trim());
                     }
                 }

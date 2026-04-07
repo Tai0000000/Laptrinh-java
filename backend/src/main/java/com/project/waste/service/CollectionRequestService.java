@@ -13,6 +13,7 @@ import com.project.waste.repository.CollectorRepository;
 import com.project.waste.repository.RequestStatusHistoryRepository;
 import com.project.waste.repository.UserRepository;
 import com.project.waste.enums.CollectionStatus;
+import com.project.waste.enums.WasteType;
 import jakarta.persistence.OptimisticLockException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;

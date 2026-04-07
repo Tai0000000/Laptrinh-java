@@ -34,13 +34,13 @@ public class CollectionRequest {
 
     // ── State Machine ──────────────────────────────────────────────
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "collection_status")
+    @Column(nullable = false)
     @Builder.Default
     private CollectionStatus status = CollectionStatus.PENDING;
 
     // ── Waste Info ─────────────────────────────────────────────────
     @Enumerated(EnumType.STRING)
-    @Column(name = "waste_type", nullable = false, columnDefinition = "waste_type")
+    @Column(name = "waste_type", nullable = false)
     private WasteType wasteType;
 
     private String description;

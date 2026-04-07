@@ -32,7 +32,11 @@ public class AdminService {
 
         Map<String, Long> requestsByStatus = new LinkedHashMap<>();
         requestRepo.globalCountByStatus()
-                .forEach(row -> requestsByStatus.put(row[0].toString(), (Long) row[1]));
+                .forEach(row -> {
+                    if (row[0] != null && row[1] != null) {
+                        requestsByStatus.put(row[0].toString(), ((Number) row[1]).longValue());
+                    }
+                });
 
         long openComplaints = complaintRepo.findByStatus("OPEN",
                 PageRequest.of(0, 1)).getTotalElements();

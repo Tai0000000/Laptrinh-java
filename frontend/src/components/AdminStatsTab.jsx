@@ -30,17 +30,15 @@ const MOCK_STATS = {
 
 export default function AdminStatsTab() {
     const [stats, setStats] = useState(MOCK_STATS);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        /*
         axiosClient.get('/admin/overview')
             .then(res => {
                 setStats(res.data);
                 setLoading(false);
             })
             .catch(() => setLoading(false));
-        */
     }, []);
 
     if (loading) return <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>Đang tải thống kê...</div>;
