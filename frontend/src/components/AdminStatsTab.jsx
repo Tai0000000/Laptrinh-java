@@ -1,60 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-    PieChart, Pie, Cell, LineChart, Line, AreaChart, Area
+    PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
-import { Download, Calendar, Filter, TrendingUp, Package, Users, Building2 } from 'lucide-react';
+import { Download, TrendingUp, Package, Users, Building2 } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
 
 const COLORS = ['#22c55e', '#3b82f6', '#eab308', '#ef4444', '#a855f7'];
 
-const MOCK_STATS = {
-    totalUsers: 1250,
-    usersByRole: {
-        'ADMIN': 3,
-        'CITIZEN': 1150,
-        'COLLECTOR': 85,
-        'ENTERPRISE': 12
-    },
-    totalRequests: 1456,
-    requestsByStatus: {
-        'PENDING': 23,
-        'ACCEPTED': 45,
-        'ASSIGNED': 32,
-        'ON_THE_WAY': 12,
-        'COLLECTED': 1344
-    },
-    openComplaints: 5,
-    totalEnterprises: 12
-};
-
 export default function AdminStatsTab() {
-    const [stats, setStats] = useState(MOCK_STATS);
+    const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
+        let cancelled = false;
+        setLoading(true);
+        setError(null);
         axiosClient.get('/admin/overview')
             .then(res => {
+                if (cancelled) return;
                 setStats(res.data);
                 setLoading(false);
             })
-            .catch(() => setLoading(false));
+            .catch(() => {
+                if (cancelled) return;
+                setError('Không thể tải thống kê từ máy chủ');
+                setLoading(false);
+            });
+        return () => { cancelled = true; };
     }, []);
 
     if (loading) return <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>Đang tải thống kê...</div>;
+    if (error) return <div style={{ padding: '40px', textAlign: 'center', color: '#ef4444' }}>{error}</div>;
+    if (!stats) return null;
 
     const wasteData = stats?.requestsByStatus ? Object.entries(stats.requestsByStatus).map(([name, value]) => ({ name, value })) : [];
     const userData = stats?.usersByRole ? Object.entries(stats.usersByRole).map(([name, value]) => ({ name, value })) : [];
 
-    // Mock data for trends (since backend doesn't provide historical data yet)
-    const trendData = [
-        { date: '01/04', requests: 45, completed: 38 },
-        { date: '02/04', requests: 52, completed: 42 },
-        { date: '03/04', requests: 48, completed: 45 },
-        { date: '04/04', requests: 61, completed: 50 },
-        { date: '05/04', requests: 55, completed: 48 },
-        { date: '06/04', requests: 67, completed: 55 },
-    ];
+    const trendData = Array.isArray(stats.last7DaysTrend) ? stats.last7DaysTrend : [];
 
     return (
         <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '32px', color: '#fff' }}>
@@ -105,6 +89,11 @@ export default function AdminStatsTab() {
                         Trạng thái yêu cầu
                     </h3>
                     <div style={{ height: '300px', display: 'flex', alignItems: 'center' }}>
+                        {wasteData.length === 0 ? (
+                            <div style={{ width: '100%', textAlign: 'center', color: '#666', fontSize: '14px' }}>
+                                Chưa có dữ liệu trạng thái yêu cầu
+                            </div>
+                        ) : (
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
@@ -124,6 +113,7 @@ export default function AdminStatsTab() {
                                 <Legend layout="vertical" align="right" verticalAlign="middle" />
                             </PieChart>
                         </ResponsiveContainer>
+                        )}
                     </div>
                 </div>
             </div>
@@ -157,19 +147,33 @@ export default function AdminStatsTab() {
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ color: '#888' }}>Thời gian phản hồi trung bình</span>
-                            <span style={{ fontWeight: '600' }}>1.2 giờ</span>
+                            <span style={{ color: '#888' }}>Thời gian xử lý TB (PENDING → COLLECTED)</span>
+                            <span style={{ fontWeight: '600' }}>
+                                {stats.avgHoursToCollect != null ? `${stats.avgHoursToCollect} giờ` : '—'}
+                            </span>
                         </div>
                         <div style={{ height: '4px', background: '#1a1a1a', borderRadius: '2px', overflow: 'hidden' }}>
-                            <div style={{ width: '85%', height: '100%', background: '#22c55e' }} />
+                            <div style={{
+                                width: `${stats.avgHoursToCollect != null
+                                    ? Math.min(100, (stats.avgHoursToCollect / 72) * 100)
+                                    : 0}%`,
+                                height: '100%',
+                                background: '#22c55e'
+                            }} />
                         </div>
                         
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ color: '#888' }}>Tỷ lệ giải quyết khiếu nại</span>
-                            <span style={{ fontWeight: '600' }}>92%</span>
+                            <span style={{ color: '#888' }}>Tỷ lệ đã xử lý khiếu nại</span>
+                            <span style={{ fontWeight: '600' }}>
+                                {stats.complaintResolutionPercent != null ? `${stats.complaintResolutionPercent}%` : '—'}
+                            </span>
                         </div>
                         <div style={{ height: '4px', background: '#1a1a1a', borderRadius: '2px', overflow: 'hidden' }}>
-                            <div style={{ width: '92%', height: '100%', background: '#3b82f6' }} />
+                            <div style={{
+                                width: `${stats.complaintResolutionPercent != null ? stats.complaintResolutionPercent : 0}%`,
+                                height: '100%',
+                                background: '#3b82f6'
+                            }} />
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

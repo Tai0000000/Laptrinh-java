@@ -46,6 +46,28 @@ public interface CollectionRequestRepository extends JpaRepository<CollectionReq
     @Query("SELECT r.status, COUNT(r) FROM CollectionRequest r GROUP BY r.status")
     List<Object[]> globalCountByStatus();
 
+    @Query("SELECT CAST(r.createdAt AS date), COUNT(r) FROM CollectionRequest r " +
+           "WHERE r.createdAt >= :since GROUP BY CAST(r.createdAt AS date) " +
+           "ORDER BY CAST(r.createdAt AS date)")
+    List<Object[]> countCreatedByDaySince(@Param("since") LocalDateTime since);
+
+    @Query("SELECT CAST(r.updatedAt AS date), COUNT(r) FROM CollectionRequest r " +
+           "WHERE r.status = :status AND r.updatedAt >= :since " +
+           "GROUP BY CAST(r.updatedAt AS date) ORDER BY CAST(r.updatedAt AS date)")
+    List<Object[]> countCollectedByDaySince(@Param("since") LocalDateTime since,
+                                            @Param("status") CollectionStatus status);
+
+    @Query("SELECT CAST(r.createdAt AS date), r.wasteType, COUNT(r) FROM CollectionRequest r " +
+           "WHERE r.createdAt >= :since " +
+           "GROUP BY CAST(r.createdAt AS date), r.wasteType " +
+           "ORDER BY CAST(r.createdAt AS date)")
+    List<Object[]> countByDayAndWasteTypeSince(@Param("since") LocalDateTime since);
+
+    @Query(value = "SELECT AVG(CAST(DATEDIFF(HOUR, created_at, updated_at) AS FLOAT)) " +
+           "FROM collection_requests WHERE status = 'COLLECTED' " +
+           "AND updated_at IS NOT NULL AND created_at IS NOT NULL", nativeQuery = true)
+    Double averageHoursCreatedToUpdatedCollected();
+
     long countByStatus(CollectionStatus status);
 
     List<CollectionRequest> findByStatusAndCreatedAtBefore(CollectionStatus status, LocalDateTime createdAt);

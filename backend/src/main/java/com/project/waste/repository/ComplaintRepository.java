@@ -11,6 +11,7 @@ import java.util.List;
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     Page<Complaint> findByCitizenId(Long citizenId, Pageable pageable);
     Page<Complaint> findByStatus(String status, Pageable pageable);
+    long countByStatus(String status);
     List<Complaint> findByRequestId(Long requestId);
     
     @Query("SELECT c FROM Complaint c JOIN c.request r WHERE r.enterprise.id = :enterpriseId")

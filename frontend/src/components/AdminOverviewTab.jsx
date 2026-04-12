@@ -26,16 +26,6 @@ import {
 } from 'recharts';
 import axiosClient from '../api/axiosClient';
 
-const data = [
-  { name: 'T2', recyclable: 120, organic: 80, hazardous: 20, general: 40 },
-  { name: 'T3', recyclable: 140, organic: 95, hazardous: 15, general: 55 },
-  { name: 'T4', recyclable: 135, organic: 110, hazardous: 25, general: 45 },
-  { name: 'T5', recyclable: 150, organic: 105, hazardous: 30, general: 50 },
-  { name: 'T6', recyclable: 115, organic: 100, hazardous: 20, general: 60 },
-  { name: 'T7', recyclable: 185, organic: 115, hazardous: 35, general: 40 },
-  { name: 'CN', recyclable: 95, organic: 65, hazardous: 10, general: 35 },
-];
-
 const StatCard = ({ title, value, subtitle, trend, icon, color, trendColor }) => (
   <div style={{ 
     background: '#111', 
@@ -81,28 +71,8 @@ const StatCard = ({ title, value, subtitle, trend, icon, color, trendColor }) =>
   </div>
 );
 
-const MOCK_STATS = {
-    totalUsers: 1250,
-    usersByRole: {
-        'ADMIN': 3,
-        'CITIZEN': 1150,
-        'COLLECTOR': 85,
-        'ENTERPRISE': 12
-    },
-    totalRequests: 1456,
-    requestsByStatus: {
-        'PENDING': 23,
-        'ACCEPTED': 45,
-        'ASSIGNED': 32,
-        'ON_THE_WAY': 12,
-        'COLLECTED': 1344
-    },
-    openComplaints: 5,
-    totalEnterprises: 12
-};
-
 export default function AdminOverviewTab() {
-    const [stats, setStats] = useState(MOCK_STATS);
+    const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -125,12 +95,17 @@ export default function AdminOverviewTab() {
 
     if (loading) return <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>Đang tải dữ liệu...</div>;
     if (error) return <div style={{ padding: '40px', textAlign: 'center', color: '#ef4444' }}>{error}</div>;
+    if (!stats) return null;
 
     const requestsByStatus = stats?.requestsByStatus || {};
     const totalRequests = stats?.totalRequests || 0;
     const pendingRequests = requestsByStatus['PENDING'] || 0;
     const collectingRequests = (requestsByStatus['ACCEPTED'] || 0) + (requestsByStatus['ASSIGNED'] || 0) + (requestsByStatus['ON_THE_WAY'] || 0);
     const completedRequests = requestsByStatus['COLLECTED'] || 0;
+
+    const wasteWeekData = Array.isArray(stats.wasteByWeekdayLast7Days) && stats.wasteByWeekdayLast7Days.length > 0
+        ? stats.wasteByWeekdayLast7Days
+        : [{ name: '—', recyclable: 0, organic: 0, hazardous: 0, general: 0, electronic: 0 }];
 
     return (
         <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
@@ -202,7 +177,7 @@ export default function AdminOverviewTab() {
                     </div>
                     <div style={{ height: '300px' }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={data}>
+                            <BarChart data={wasteWeekData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#1f1f1f" vertical={false} />
                                 <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
@@ -214,6 +189,7 @@ export default function AdminOverviewTab() {
                                 <Bar dataKey="recyclable" name="Tái chế" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={8} />
                                 <Bar dataKey="organic" name="Hữu cơ" fill="#eab308" radius={[4, 4, 0, 0]} barSize={8} />
                                 <Bar dataKey="hazardous" name="Nguy hại" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={8} />
+                                <Bar dataKey="electronic" name="Điện tử" fill="#a855f7" radius={[4, 4, 0, 0]} barSize={8} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
