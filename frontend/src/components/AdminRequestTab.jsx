@@ -50,8 +50,8 @@ const MOCK_REQUESTS = [
 ];
 
 export default function AdminRequestTab() {
-    const [requests, setRequests] = useState(MOCK_REQUESTS);
-    const [selectedRequestId, setSelectedRequestId] = useState(MOCK_REQUESTS[0].id);
+    const [requests, setRequests] = useState([]);
+    const [selectedRequestId, setSelectedRequestId] = useState(null);
     const [statusHistory, setStatusHistory] = useState([
         { status: 'PENDING', updatedAt: '2026-04-01T08:30:00', note: 'Người dân đã gửi yêu cầu lên hệ thống.' },
         { status: 'COLLECTING', updatedAt: '2026-04-02T09:00:00', note: 'Nhân viên Tài đang di chuyển đến điểm thu gom.' },
