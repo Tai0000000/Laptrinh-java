@@ -1,4 +1,6 @@
 package com.project.waste.service;
+import com.project.waste.dto.AdminEnterpriseDto;
+import com.project.waste.dto.EnterpriseComplaintDto;
 import com.project.waste.enums.UserRole;
 import com.project.waste.enums.WasteType;
 import com.project.waste.model.*;
@@ -212,12 +214,13 @@ public class AdminService {
         return userRepo.save(user);
     }
 
-    public Page<Enterprise> getAllEnterprises(String search, int page, int size) {
+    @Transactional(readOnly = true)
+    public Page<AdminEnterpriseDto> getAllEnterprises(String search, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         if (search != null && !search.isBlank()) {
-            return enterpriseRepo.findBySearch(search.trim(), pageable);
+            return enterpriseRepo.findBySearch(search.trim(), pageable).map(this::toAdminEnterpriseDto);
         }
-        return enterpriseRepo.findAll(pageable);
+        return enterpriseRepo.findAll(pageable).map(this::toAdminEnterpriseDto);
     }
 
     @Transactional
@@ -233,24 +236,25 @@ public class AdminService {
         return enterpriseRepo.save(ent);
     }
 
-    public Page<Enterprise> getAllEnterprises(int page) {
+    public Page<AdminEnterpriseDto> getAllEnterprises(int page) {
         return getAllEnterprises(null, page, 20);
     }
 
-    public Page<CollectionRequest> getAllRequests(int page) {
-        return requestRepo.findAll(
-                PageRequest.of(page, 20, Sort.by("createdAt").descending()));
+    public Page<CollectionRequest> getAllRequests(int page, int size) {
+        int safeSize = Math.min(Math.max(size, 1), 500);
+        return requestRepo.findAll(PageRequest.of(page, safeSize, Sort.by("createdAt").descending()));
     }
 
 
-    public Page<Complaint> getOpenComplaints(int page) {
-        return complaintRepo.findByStatus("OPEN",
-                PageRequest.of(page, 20, Sort.by("createdAt").descending()));
+    @Transactional(readOnly = true)
+    public Page<EnterpriseComplaintDto> getOpenComplaints(int page) {
+        return complaintRepo.findByStatus("OPEN", PageRequest.of(page, 20, Sort.by("createdAt").descending()))
+                .map(this::toEnterpriseComplaintDto);
     }
 
     @Transactional
-    public Complaint resolveComplaint(@NonNull Long complaintId, String adminUsername,
-                                       String resolution, boolean dismiss) {
+    public EnterpriseComplaintDto resolveComplaint(@NonNull Long complaintId, String adminUsername,
+                                                   String resolution, boolean dismiss) {
         Complaint complaint = complaintRepo.findById(complaintId)
                 .orElseThrow(() -> new ResourceNotFoundException("Complaint không tồn tại"));
 
@@ -266,7 +270,7 @@ public class AdminService {
         complaint.setResolution(resolution);
         complaint.setResolvedAt(LocalDateTime.now());
 
-        return complaintRepo.save(complaint);
+        return toEnterpriseComplaintDto(complaintRepo.save(complaint));
     }
 
     
@@ -309,5 +313,38 @@ public class AdminService {
             count++;
         }
         return count;
+    }
+
+    private AdminEnterpriseDto toAdminEnterpriseDto(Enterprise enterprise) {
+        return new AdminEnterpriseDto(
+                enterprise.getId(),
+                enterprise.getCompanyName(),
+                enterprise.getLicenseNumber(),
+                enterprise.getAcceptedWasteTypes(),
+                enterprise.getServiceArea(),
+                enterprise.getMaxCapacityKg(),
+                enterprise.getAddress(),
+                enterprise.isVerified(),
+                enterprise.getCreatedAt()
+        );
+    }
+
+    private EnterpriseComplaintDto toEnterpriseComplaintDto(Complaint complaint) {
+        Long requestId = complaint.getRequest() != null ? complaint.getRequest().getId() : null;
+        Long citizenId = complaint.getCitizen() != null ? complaint.getCitizen().getId() : null;
+        String citizenFullName = complaint.getCitizen() != null ? complaint.getCitizen().getFullName() : null;
+
+        return new EnterpriseComplaintDto(
+                complaint.getId(),
+                requestId,
+                citizenId,
+                citizenFullName,
+                complaint.getTitle(),
+                complaint.getContent(),
+                complaint.getStatus(),
+                complaint.getResolution(),
+                complaint.getCreatedAt(),
+                complaint.getResolvedAt()
+        );
     }
 }

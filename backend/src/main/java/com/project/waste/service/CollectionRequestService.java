@@ -4,12 +4,14 @@ import com.project.waste.event.CollectionCompletedEvent;
 import com.project.waste.model.Collector;
 import com.project.waste.model.Enterprise;
 import com.project.waste.model.CollectionRequest;
+import com.project.waste.model.PointHistory;
 import com.project.waste.model.RequestStatusHistory;
 import com.project.waste.model.User;
 import com.project.waste.dto.CreateCollectionRequest;
 import com.project.waste.repository.CollectionRequestRepository;
 import com.project.waste.repository.EnterpriseRepository;
 import com.project.waste.repository.CollectorRepository;
+import com.project.waste.repository.PointHistoryRepository;
 import com.project.waste.repository.RequestStatusHistoryRepository;
 import com.project.waste.repository.UserRepository;
 import com.project.waste.enums.CollectionStatus;
@@ -33,12 +35,14 @@ public class CollectionRequestService {
 
     private static final int OPTIMISTIC_LOCK_MAX_RETRIES = 3;
     private static final int PAGE_SIZE = 10;
+    private static final int CITIZEN_REPORT_BONUS_POINTS = 1;
 
     private final CollectionRequestRepository collectionRequestRepository;
     private final CollectorRepository collectorRepository;
     private final RequestStatusHistoryRepository requestStatusHistoryRepository;
     private final EnterpriseRepository enterpriseRepository;
     private final UserRepository userRepository;
+    private final PointHistoryRepository pointHistoryRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final CollectionRequestService self;
 
@@ -47,6 +51,7 @@ public class CollectionRequestService {
                                    RequestStatusHistoryRepository requestStatusHistoryRepository,
                                    EnterpriseRepository enterpriseRepository,
                                    UserRepository userRepository,
+                                   PointHistoryRepository pointHistoryRepository,
                                    ApplicationEventPublisher eventPublisher,
                                    @Lazy CollectionRequestService self) {
         this.collectionRequestRepository = collectionRequestRepository;
@@ -54,6 +59,7 @@ public class CollectionRequestService {
         this.requestStatusHistoryRepository = requestStatusHistoryRepository;
         this.enterpriseRepository = enterpriseRepository;
         this.userRepository = userRepository;
+        this.pointHistoryRepository = pointHistoryRepository;
         this.eventPublisher = eventPublisher;
         this.self = self;
     }
@@ -84,6 +90,15 @@ public class CollectionRequestService {
                 .note("Initial request created via API")
                 .build();
         requestStatusHistoryRepository.save(Objects.requireNonNull(history));
+
+        pointHistoryRepository.save(Objects.requireNonNull(PointHistory.builder()
+                .user(citizen)
+                .request(saved)
+                .points(CITIZEN_REPORT_BONUS_POINTS)
+                .reason("Thưởng: gửi báo cáo thu gom")
+                .build()));
+
+        userRepository.addPoints(citizen.getId(), CITIZEN_REPORT_BONUS_POINTS);
 
         return saved;
     }

@@ -1,5 +1,6 @@
 package com.project.waste.controller;
 
+import com.project.waste.dto.EnterpriseComplaintDto;
 import com.project.waste.enums.WasteType;
 import com.project.waste.model.*;
 import com.project.waste.service.EnterpriseService;
@@ -28,14 +29,14 @@ public class EnterpriseController {
     }
 
     @GetMapping("/complaints")
-    public ResponseEntity<Page<Complaint>> getComplaints(
+    public ResponseEntity<Page<EnterpriseComplaintDto>> getComplaints(
             @RequestParam(defaultValue = "0") int page,
             @AuthenticationPrincipal UserDetails ud) {
         return ResponseEntity.ok(enterpriseService.getMyComplaints(ud.getUsername(), page));
     }
 
     @PostMapping("/complaints/{complaintId}/resolve")
-    public ResponseEntity<Complaint> resolveComplaint(
+    public ResponseEntity<EnterpriseComplaintDto> resolveComplaint(
             @PathVariable Long complaintId,
             @RequestBody Map<String, String> body,
             @AuthenticationPrincipal UserDetails ud) {

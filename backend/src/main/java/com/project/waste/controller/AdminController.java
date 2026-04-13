@@ -1,5 +1,7 @@
 package com.project.waste.controller;
 
+import com.project.waste.dto.AdminEnterpriseDto;
+import com.project.waste.dto.EnterpriseComplaintDto;
 import com.project.waste.enums.UserRole;
 import com.project.waste.model.*;
 import com.project.waste.service.AdminService;
@@ -49,8 +51,9 @@ public class AdminController {
 
     @GetMapping("/requests")
     public ResponseEntity<Page<CollectionRequest>> getAllRequests(
-            @RequestParam(defaultValue = "0") int page) {
-        return ResponseEntity.ok(adminService.getAllRequests(page));
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "200") int size) {
+        return ResponseEntity.ok(adminService.getAllRequests(page, size));
     }
 
     
@@ -65,7 +68,7 @@ public class AdminController {
     }
 
     @GetMapping("/enterprises")
-    public ResponseEntity<Page<Enterprise>> getAllEnterprises(
+    public ResponseEntity<Page<AdminEnterpriseDto>> getAllEnterprises(
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -73,13 +76,13 @@ public class AdminController {
     }
 
     @GetMapping("/complaints")
-    public ResponseEntity<Page<Complaint>> getOpenComplaints(
+    public ResponseEntity<Page<EnterpriseComplaintDto>> getOpenComplaints(
             @RequestParam(defaultValue = "0") int page) {
         return ResponseEntity.ok(adminService.getOpenComplaints(page));
     }
 
     @PostMapping("/complaints/{id}/resolve")
-    public ResponseEntity<Complaint> resolveComplaint(
+    public ResponseEntity<EnterpriseComplaintDto> resolveComplaint(
             @PathVariable Long id,
             @RequestBody Map<String, Object> body,
             @AuthenticationPrincipal UserDetails ud) {

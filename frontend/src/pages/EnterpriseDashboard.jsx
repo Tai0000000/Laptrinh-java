@@ -46,6 +46,13 @@ const getBadgeStyle = (status) => ({
   color: statusColors[status]?.color || '#d1d5db'
 });
 
+const formatComplaintStatus = (status) => {
+  if (status === 'OPEN') return 'Mới';
+  if (status === 'RESOLVED') return 'Đã xử lý';
+  if (status === 'DISMISSED') return 'Đã đóng';
+  return status || 'Không rõ';
+};
+
 export default function EnterpriseDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -384,9 +391,11 @@ export default function EnterpriseDashboard() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
                         <div style={{ fontWeight: '600', fontSize: '15px' }}>{complaint.title}</div>
-                        <div style={{ color: '#888', fontSize: '12px' }}>Yêu cầu #{complaint.requestId} • {complaint.citizen?.fullName}</div>
+                        <div style={{ color: '#888', fontSize: '12px' }}>
+                          Yêu cầu #{complaint.requestId} • {complaint.citizenFullName || 'Không rõ người gửi'}
+                        </div>
                       </div>
-                      <span style={getBadgeStyle(complaint.status)}>{complaint.status === 'OPEN' ? 'Mới' : 'Đã xử lý'}</span>
+                      <span style={getBadgeStyle(complaint.status)}>{formatComplaintStatus(complaint.status)}</span>
                     </div>
                     <div style={{ fontSize: '14px', color: '#ccc', lineHeight: '1.5' }}>{complaint.content}</div>
                     {complaint.status === 'OPEN' ? (

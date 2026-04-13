@@ -94,13 +94,13 @@ export default function AdminEnterpriseTab() {
                             </td>
                             <td style={{ padding: '16px 24px' }}>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                                    {e.acceptedWasteTypes?.split(',').map(type => (
+                                    {(e.acceptedWasteTypes || '').split(',').filter(Boolean).map(type => (
                                         <span key={type} style={{ background: '#1a1a1a', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', color: '#ccc' }}>{type.trim()}</span>
                                     ))}
                                 </div>
                             </td>
                             <td style={{ padding: '16px 24px', fontSize: '13px', color: '#888' }}>
-                                {e.address}
+                                {e.address || 'Chưa cập nhật'}
                             </td>
                         </tr>
                     ))}

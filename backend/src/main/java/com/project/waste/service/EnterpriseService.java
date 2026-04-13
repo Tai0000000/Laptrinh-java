@@ -1,5 +1,6 @@
 package com.project.waste.service;
 
+import com.project.waste.dto.EnterpriseComplaintDto;
 import com.project.waste.model.*;
 import com.project.waste.repository.*;
 import com.project.waste.enums.UserRole;
@@ -51,13 +52,15 @@ public class EnterpriseService {
                 });
     }
 
-    public Page<Complaint> getMyComplaints(String ownerEmail, int page) {
+    @Transactional(readOnly = true)
+    public Page<EnterpriseComplaintDto> getMyComplaints(String ownerEmail, int page) {
         Enterprise enterprise = getMyEnterprise(ownerEmail);
-        return complaintRepo.findByEnterpriseId(enterprise.getId(), PageRequest.of(page, 20));
+        return complaintRepo.findByEnterpriseId(enterprise.getId(), PageRequest.of(page, 20))
+                .map(this::toEnterpriseComplaintDto);
     }
 
     @Transactional
-    public Complaint resolveComplaint(String ownerEmail, Long complaintId, String resolution) {
+    public EnterpriseComplaintDto resolveComplaint(String ownerEmail, Long complaintId, String resolution) {
         Enterprise enterprise = getMyEnterprise(ownerEmail);
         Complaint complaint = complaintRepo.findById(complaintId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khiếu nại"));
@@ -71,7 +74,7 @@ public class EnterpriseService {
         complaint.setResolvedBy(enterprise.getOwner());
         complaint.setResolvedAt(LocalDateTime.now());
 
-        return complaintRepo.save(complaint);
+        return toEnterpriseComplaintDto(complaintRepo.save(complaint));
     }
 
     @Transactional
@@ -201,5 +204,24 @@ public class EnterpriseService {
         return userRepo.findByEmail(principal)
                 .or(() -> userRepo.findByUsername(principal))
                 .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
+    }
+
+    private EnterpriseComplaintDto toEnterpriseComplaintDto(Complaint complaint) {
+        Long requestId = complaint.getRequest() != null ? complaint.getRequest().getId() : null;
+        Long citizenId = complaint.getCitizen() != null ? complaint.getCitizen().getId() : null;
+        String citizenFullName = complaint.getCitizen() != null ? complaint.getCitizen().getFullName() : null;
+
+        return new EnterpriseComplaintDto(
+                complaint.getId(),
+                requestId,
+                citizenId,
+                citizenFullName,
+                complaint.getTitle(),
+                complaint.getContent(),
+                complaint.getStatus(),
+                complaint.getResolution(),
+                complaint.getCreatedAt(),
+                complaint.getResolvedAt()
+        );
     }
 }

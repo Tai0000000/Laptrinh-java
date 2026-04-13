@@ -74,7 +74,7 @@ export default function AdminComplaintTab() {
 
     const filteredComplaints = complaints.filter(c => 
         c.title?.toLowerCase().includes(search.toLowerCase()) ||
-        c.citizen?.fullName?.toLowerCase().includes(search.toLowerCase()) ||
+        c.citizenFullName?.toLowerCase().includes(search.toLowerCase()) ||
         c.id.toString().includes(search)
     );
 
@@ -123,7 +123,7 @@ export default function AdminComplaintTab() {
                                 <td style={{ padding: '16px 24px' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                         <div style={{ fontWeight: '600', color: '#fff' }}>{c.title}</div>
-                                        <div style={{ fontSize: '12px', color: '#888' }}>ID: #{c.id} | Từ: {c.citizen?.fullName}</div>
+                                        <div style={{ fontSize: '12px', color: '#888' }}>ID: #{c.id} | Từ: {c.citizenFullName || 'Không rõ người gửi'}</div>
                                     </div>
                                 </td>
                                 <td style={{ padding: '16px 24px' }}>
