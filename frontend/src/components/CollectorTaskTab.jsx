@@ -16,7 +16,12 @@ export default function CollectorTaskTab() {
                 setTasks(res.data || []);
             })
             .catch((e) => {
-                setError(e?.response?.data?.message || "Không tải được danh sách nhiệm vụ");
+                
+                if (e?.response?.status === 404 || e?.response?.status === 400) {
+                    setTasks([]);
+                } else {
+                    setError(e?.response?.data?.message || "Không tải được danh sách nhiệm vụ");
+                }
             })
             .finally(() => {
                 setLoading(false);
@@ -45,7 +50,7 @@ export default function CollectorTaskTab() {
         axiosClient.post(`/requests/${id}/complete`, { proofImageUrl: imgUrl })
             .then(() => {
                 alert("Đã hoàn thành nhiệm vụ!");
-                fetchTasks(); // Tải lại bảng
+                fetchTasks(); 
             })
             .catch((e) => alert(e?.response?.data?.message || "Lỗi khi cập nhật"));
     };
@@ -75,10 +80,10 @@ export default function CollectorTaskTab() {
                         <td style={{ padding: '12px' }}>
                                 <span style={{
                                     padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold',
-                                    background: t.status === 'ASSIGNED' ? '#fff3e0' : '#e3f2fd',
-                                    color: t.status === 'ASSIGNED' ? '#ef6c00' : '#1565c0'
+                                    background: t.status === 'ASSIGNED' ? '#fff3e0' : (t.status === 'ON_THE_WAY' ? '#e3f2fd' : '#f8f9fa'),
+                                    color: t.status === 'ASSIGNED' ? '#ef6c00' : (t.status === 'ON_THE_WAY' ? '#1565c0' : '#666')
                                 }}>
-                                    {t.status}
+                                    {t.status === 'ASSIGNED' ? 'Đã phân công' : (t.status === 'ON_THE_WAY' ? 'Đang thực hiện' : t.status)}
                                 </span>
                         </td>
                         <td style={{ padding: '12px' }}>
@@ -87,7 +92,7 @@ export default function CollectorTaskTab() {
                                     Bắt đầu
                                 </button>
                             )}
-                            {t.status === 'IN_PROGRESS' && (
+                            {t.status === 'ON_THE_WAY' && (
                                 <button onClick={() => handleComplete(t.id)} style={{ cursor: 'pointer', padding: '5px 10px', background: '#2ecc71', color: 'white', border: 'none', borderRadius: '4px' }}>
                                     Hoàn thành
                                 </button>

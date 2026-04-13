@@ -113,7 +113,7 @@ export default function LoginRegister() {
                 padding: '32px',
                 border: '1px solid #1f1f1f'
             }}>
-                {/* Toggle Buttons */}
+                {}
                 <div style={{ 
                     display: 'flex', 
                     backgroundColor: '#1a1a1a', 

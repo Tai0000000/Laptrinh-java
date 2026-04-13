@@ -49,7 +49,7 @@ export default function AdminDashboard() {
 
     return (
         <div style={{ display: 'flex', height: '100vh', backgroundColor: '#000', color: '#fff', fontFamily: 'Inter, system-ui, sans-serif' }}>
-            {/* Sidebar */}
+            {}
             <div style={{
                 width: '260px', background: '#0a0a0a', borderRight: '1px solid #1f1f1f',
                 display: 'flex', flexDirection: 'column', padding: '24px 16px'
@@ -106,7 +106,7 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* Main Content */}
+            {}
             <div style={{ flex: 1, overflowY: 'auto', backgroundColor: '#000' }}>
                 {activeTab === 'OVERVIEW' && <AdminOverviewTab />}
                 {activeTab === 'REQUESTS' && <AdminRequestTab />}

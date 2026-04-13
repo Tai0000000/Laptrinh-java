@@ -80,7 +80,7 @@ export default function AdminComplaintTab() {
 
     return (
         <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px', color: '#fff' }}>
-            {/* Header */}
+            {}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <MessageSquare size={28} color="#22c55e" />
@@ -99,7 +99,7 @@ export default function AdminComplaintTab() {
                 </div>
             </div>
 
-            {/* Table */}
+            {}
             <div style={{ background: '#111', borderRadius: '24px', border: '1px solid #1f1f1f', overflow: 'hidden' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead>
@@ -177,7 +177,7 @@ export default function AdminComplaintTab() {
                 </table>
             </div>
 
-            {/* Pagination */}
+            {}
             {totalPages > 1 && (
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '12px' }}>
                     <button 

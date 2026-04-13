@@ -42,7 +42,7 @@ export default function AdminStatsTab() {
 
     return (
         <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '32px', color: '#fff' }}>
-            {/* Header */}
+            {}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '700' }}>Phân tích & Thống kê</h1>
@@ -54,9 +54,9 @@ export default function AdminStatsTab() {
                 </button>
             </div>
 
-            {/* Main Charts */}
+            {}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
-                {/* Request Trend */}
+                {}
                 <div style={{ background: '#111', borderRadius: '24px', padding: '24px', border: '1px solid #1f1f1f' }}>
                     <h3 style={{ margin: '0 0 24px', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <TrendingUp size={20} color="#22c55e" />
@@ -82,7 +82,7 @@ export default function AdminStatsTab() {
                     </div>
                 </div>
 
-                {/* Waste Distribution */}
+                {}
                 <div style={{ background: '#111', borderRadius: '24px', padding: '24px', border: '1px solid #1f1f1f' }}>
                     <h3 style={{ margin: '0 0 24px', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <Package size={20} color="#3b82f6" />
@@ -118,9 +118,9 @@ export default function AdminStatsTab() {
                 </div>
             </div>
 
-            {/* Bottom Section */}
+            {}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-                {/* User Roles */}
+                {}
                 <div style={{ background: '#111', borderRadius: '24px', padding: '24px', border: '1px solid #1f1f1f' }}>
                     <h3 style={{ margin: '0 0 24px', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <Users size={20} color="#eab308" />
@@ -139,7 +139,7 @@ export default function AdminStatsTab() {
                     </div>
                 </div>
 
-                {/* System Health */}
+                {}
                 <div style={{ background: '#111', borderRadius: '24px', padding: '24px', border: '1px solid #1f1f1f', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                     <h3 style={{ margin: '0 0 24px', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <Building2 size={20} color="#ef4444" />

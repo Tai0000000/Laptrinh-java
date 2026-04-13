@@ -48,7 +48,7 @@ public class PointEventHandler {
     }
 
     private void creditDefaultPoints(RequestCollectedEvent event) {
-        // Default 5 điểm nếu enterprise chưa cấu hình rule
+        
         saveTransaction(event, null, 5, "Collected " + event.getWasteType() + " (default)");
     }
 
@@ -66,7 +66,7 @@ public class PointEventHandler {
                 .build();
         pointTxRepo.save(Objects.requireNonNull(tx));
 
-        // Cộng điểm atomic (UPDATE users SET total_points = total_points + ?)
+        
         userRepo.addPoints(event.getCitizenId(), points);
 
         log.info("Credited {} points to citizen {}. Reason: {}", points, event.getCitizenId(), reason);

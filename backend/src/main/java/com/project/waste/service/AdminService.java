@@ -205,45 +205,36 @@ public class AdminService {
     }
 
     @Transactional
-    public User toggleUserActive(@NonNull Long userId) {
+    public User toggleUserActive(Long userId) {
         User user = userRepo.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
-        userRepo.setActive(userId, !user.isActive());
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         user.setActive(!user.isActive());
-        return user;
+        return userRepo.save(user);
     }
 
-    @Transactional
-    public Enterprise verifyEnterprise(@NonNull Long enterpriseId) {
-        Enterprise enterprise = enterpriseRepo.findById(enterpriseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Enterprise không tồn tại"));
-        enterprise.setVerified(true);
-        return enterpriseRepo.save(enterprise);
-    }
-
-    @Transactional
-    public Enterprise rejectEnterprise(@NonNull Long enterpriseId) {
-        Enterprise enterprise = enterpriseRepo.findById(enterpriseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Enterprise không tồn tại"));
-        enterprise.setVerified(false);
-        return enterpriseRepo.save(enterprise);
-    }
-
-    public Page<Enterprise> getAllEnterprises(String search, Boolean verified, int page, int size) {
+    public Page<Enterprise> getAllEnterprises(String search, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         if (search != null && !search.isBlank()) {
-            if (verified != null) {
-                return enterpriseRepo.findByVerifiedAndSearch(verified, search.trim(), pageable);
-            }
             return enterpriseRepo.findBySearch(search.trim(), pageable);
-        } else if (verified != null) {
-            return enterpriseRepo.findByVerified(verified, pageable);
         }
         return enterpriseRepo.findAll(pageable);
     }
 
+    @Transactional
+    public Enterprise updateEnterprise(Long id, Map<String, Object> updates) {
+        Enterprise ent = enterpriseRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Enterprise not found"));
+        if (updates.containsKey("companyName")) ent.setCompanyName((String) updates.get("companyName"));
+        if (updates.containsKey("licenseNumber")) ent.setLicenseNumber((String) updates.get("licenseNumber"));
+        if (updates.containsKey("acceptedWasteTypes")) ent.setAcceptedWasteTypes((String) updates.get("acceptedWasteTypes"));
+        if (updates.containsKey("serviceArea")) ent.setServiceArea((String) updates.get("serviceArea"));
+        if (updates.containsKey("maxCapacityKg")) ent.setMaxCapacityKg(Integer.parseInt(updates.get("maxCapacityKg").toString()));
+        if (updates.containsKey("address")) ent.setAddress((String) updates.get("address"));
+        return enterpriseRepo.save(ent);
+    }
+
     public Page<Enterprise> getAllEnterprises(int page) {
-        return getAllEnterprises(null, null, page, 20);
+        return getAllEnterprises(null, page, 20);
     }
 
     public Page<CollectionRequest> getAllRequests(int page) {
@@ -278,14 +269,14 @@ public class AdminService {
         return complaintRepo.save(complaint);
     }
 
-    /**
-     * Hủy các yêu cầu {@link CollectionStatus#PENDING} quá hạn (chưa được enterprise xử lý),
-     * dùng {@link CollectionRequest#transitionTo} để đảm bảo đúng state machine.
-     *
-     * @param hoursOld   số giờ tối thiểu kể từ {@code createdAt}
-     * @param adminUsername username đăng nhập (principal), dùng cho audit {@code RequestStatusHistory}
-     * @return số bản ghi đã chuyển sang {@link CollectionStatus#CANCELLED}
-     */
+    
+
+
+
+
+
+
+
     @Transactional
     public int cancelStaleRequests(int hoursOld, String adminUsername) {
         if (hoursOld <= 0) {

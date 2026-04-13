@@ -47,25 +47,15 @@ public class AdminController {
         return ResponseEntity.ok(adminService.toggleUserActive(userId));
     }
 
-    @PatchMapping("/enterprises/{enterpriseId}/verify")
-    public ResponseEntity<Enterprise> verifyEnterprise(@PathVariable Long enterpriseId) {
-        return ResponseEntity.ok(adminService.verifyEnterprise(enterpriseId));
-    }
-
-    @PatchMapping("/enterprises/{enterpriseId}/reject")
-    public ResponseEntity<Enterprise> rejectEnterprise(@PathVariable Long enterpriseId) {
-        return ResponseEntity.ok(adminService.rejectEnterprise(enterpriseId));
-    }
-
     @GetMapping("/requests")
     public ResponseEntity<Page<CollectionRequest>> getAllRequests(
             @RequestParam(defaultValue = "0") int page) {
         return ResponseEntity.ok(adminService.getAllRequests(page));
     }
 
-    /**
-     * Hủy các yêu cầu PENDING quá hạn (theo {@code createdAt}), chuyển sang CANCELLED qua state machine.
-     */
+    
+
+
     @PostMapping("/requests/cancel-stale")
     public ResponseEntity<Map<String, Integer>> cancelStaleRequests(
             @RequestParam(defaultValue = "72") int hoursOld,
@@ -77,10 +67,9 @@ public class AdminController {
     @GetMapping("/enterprises")
     public ResponseEntity<Page<Enterprise>> getAllEnterprises(
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) Boolean verified,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(adminService.getAllEnterprises(search, verified, page, size));
+        return ResponseEntity.ok(adminService.getAllEnterprises(search, page, size));
     }
 
     @GetMapping("/complaints")

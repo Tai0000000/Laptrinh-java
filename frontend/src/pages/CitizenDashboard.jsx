@@ -162,7 +162,7 @@ export default function CitizenDashboard() {
 
   const refreshDashboard = async () => {
     setLoading(true);
-    setError('');
+    setError(''); 
 
     try {
       const [summaryRes, requestsRes, pointHistoryRes, leaderboardRes, complaintsRes] = await Promise.all([
@@ -179,6 +179,8 @@ export default function CitizenDashboard() {
       setLeaderboard(Array.isArray(leaderboardRes.data) ? leaderboardRes.data : []);
       setComplaints(Array.isArray(complaintsRes.data) ? complaintsRes.data : []);
     } catch (requestError) {
+      
+      
       setError(requestError?.response?.data?.message || 'Không tải được dữ liệu mục người dân');
     } finally {
       setLoading(false);
@@ -196,11 +198,32 @@ export default function CitizenDashboard() {
     setSubmittingReport(true);
     setError('');
 
+    const latitude = Number(String(newReport.latitude).replace(',', '.'));
+    const longitude = Number(String(newReport.longitude).replace(',', '.'));
+
+    if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
+      setError('Vĩ độ không hợp lệ. Vui lòng nhập trong khoảng -90 đến 90.');
+      setSubmittingReport(false);
+      return;
+    }
+
+    if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+      setError('Kinh độ không hợp lệ. Vui lòng nhập trong khoảng -180 đến 180.');
+      setSubmittingReport(false);
+      return;
+    }
+
+    if (newReport.photoUrl && newReport.photoUrl.length > 255) {
+      setError('URL ảnh quá dài. Vui lòng dùng link ngắn hơn.');
+      setSubmittingReport(false);
+      return;
+    }
+
     try {
       await axiosClient.post('/requests', {
         wasteType: newReport.wasteType,
-        latitude: Number(newReport.latitude),
-        longitude: Number(newReport.longitude),
+        latitude,
+        longitude,
         addressText: newReport.addressText,
         description: newReport.description,
         photoUrl: newReport.photoUrl

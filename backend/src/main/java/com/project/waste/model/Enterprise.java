@@ -25,10 +25,10 @@ public class Enterprise {
     @Column(name = "license_number")
     private String licenseNumber;
 
-    /**
-     * JSON array lưu dạng string. Ví dụ: ["ORGANIC","RECYCLABLE"]
-     * Dùng helper method để parse.
-     */
+    
+
+
+
     @Column(name = "accepted_waste_types", nullable = false)
     private String acceptedWasteTypes;
 
@@ -42,7 +42,7 @@ public class Enterprise {
 
     @Column(name = "is_verified", nullable = false)
     @Builder.Default
-    private boolean verified = false;
+    private boolean verified = true;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default

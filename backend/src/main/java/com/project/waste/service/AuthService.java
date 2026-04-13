@@ -28,6 +28,9 @@ public class AuthService {
     private UserRepository userRepository;
 
     @Autowired
+    private com.project.waste.repository.EnterpriseRepository enterpriseRepository;
+
+    @Autowired
     private PasswordEncoder encoder;
 
     @Autowired
@@ -65,12 +68,12 @@ public class AuthService {
                     .body(new MessageResponse("Error: Email is already in use!"));
         }
 
-        // Create new user's account
+        
         User user = User.builder()
                 .username(signUpRequest.getUsername())
                 .email(signUpRequest.getEmail())
                 .passwordHash(encoder.encode(signUpRequest.getPassword()))
-                .fullName(signUpRequest.getFullName() != null ? signUpRequest.getFullName() : signUpRequest.getUsername())
+                .fullName(signUpRequest.getFullName() != null && !signUpRequest.getFullName().isBlank() ? signUpRequest.getFullName() : signUpRequest.getUsername())
                 .phone(signUpRequest.getPhone())
                 .city(signUpRequest.getCity())
                 .active(true)
@@ -99,8 +102,21 @@ public class AuthService {
         }
 
         user.setRole(role);
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
-        return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+        
+        
+        if (role == UserRole.ENTERPRISE) {
+             com.project.waste.model.Enterprise ent = com.project.waste.model.Enterprise.builder()
+                     .owner(savedUser)
+                     .companyName(savedUser.getFullName() + " Enterprise")
+                     .acceptedWasteTypes("ORGANIC,RECYCLABLE,HAZARDOUS,GENERAL,ELECTRONIC")
+                     .address(savedUser.getCity() != null ? savedUser.getCity() : "TP.HCM")
+                     .verified(true)
+                     .build();
+             enterpriseRepository.save(ent);
+         }
+
+        return ResponseEntity.status(201).body(new MessageResponse("User registered successfully!"));
     }
 }

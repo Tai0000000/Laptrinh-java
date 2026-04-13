@@ -1,5 +1,6 @@
 package com.project.waste.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -19,26 +20,29 @@ public class CollectionRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ── Quan hệ ──────────────────────────────────────────────────
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "citizen_id", nullable = false)
+    @JsonIgnore
     private User citizen;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "enterprise_id")
+    @JsonIgnore
     private Enterprise enterprise;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_collector_id")
+    @JsonIgnore
     private Collector assignedCollector;
 
-    // ── State Machine ──────────────────────────────────────────────
+    
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
     private CollectionStatus status = CollectionStatus.PENDING;
 
-    // ── Waste Info ─────────────────────────────────────────────────
+    
     @Enumerated(EnumType.STRING)
     @Column(name = "waste_type", nullable = false)
     private WasteType wasteType;
@@ -74,8 +78,8 @@ public class CollectionRequest {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Proxy methods phục vụ các query/service đang dùng dạng *Id (citizenId/enterpriseId/collectorId).
-    // Mục tiêu: không cần load full relationship, chỉ cần set "stub entity" với id để JPA lưu đúng FK.
+    
+    
     public Long getCitizenId() { return citizen != null ? citizen.getId() : null; }
 
     public void setCitizenId(Long citizenId) {
@@ -112,9 +116,9 @@ public class CollectionRequest {
         this.assignedCollector = c;
     }
 
-    /**
-     * Chuyển đổi trạng thái một cách an toàn (dùng canTransitionTo của CollectionStatus).
-     */
+    
+
+
     public void transitionTo(CollectionStatus newStatus) {
         if (newStatus == null || this.status == null) {
             throw new IllegalStateException("Trạng thái hiện tại hoặc trạng thái mới không hợp lệ");

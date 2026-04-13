@@ -13,7 +13,6 @@ import com.project.waste.repository.CollectorRepository;
 import com.project.waste.repository.RequestStatusHistoryRepository;
 import com.project.waste.repository.UserRepository;
 import com.project.waste.enums.CollectionStatus;
-import com.project.waste.enums.WasteType;
 import jakarta.persistence.OptimisticLockException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
@@ -61,19 +60,11 @@ public class CollectionRequestService {
 
     @Transactional
     public CollectionRequest createRequest(String username, CreateCollectionRequest dto) {
-        User citizen = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy user: " + username));
+        User citizen = findUserByPrincipal(username);
         
-        // Find an enterprise to assign to (for simplicity, just pick first or handle differently)
-        // Note: In a real app, this might be based on service area
-        Enterprise enterprise = enterpriseRepository.findAll().stream()
-                .filter(Enterprise::isVerified)
-                .findFirst()
-                .orElse(null); // Allow enterprise to be null initially if no verified enterprise exists
-
         CollectionRequest request = CollectionRequest.builder()
                 .citizen(citizen)
-                .enterprise(enterprise)
+                .enterprise(null) 
                 .wasteType(dto.getWasteType())
                 .description(dto.getDescription())
                 .photoUrl(dto.getPhotoUrl())
@@ -98,26 +89,23 @@ public class CollectionRequestService {
     }
 
     public Page<CollectionRequest> getMyCitizenRequests(String username, int page) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = findUserByPrincipal(username);
         return collectionRequestRepository.findByCitizen_Id(user.getId(), PageRequest.of(page, PAGE_SIZE, Sort.by("createdAt").descending()));
     }
 
     public List<CollectionRequest> getPendingRequests() {
-        return collectionRequestRepository.findByStatusOrderByCreatedAtAsc(CollectionStatus.PENDING);
+        return collectionRequestRepository.findByEnterpriseIsNullAndStatusOrderByCreatedAtAsc(CollectionStatus.PENDING);
     }
 
     public List<CollectionRequest> getAcceptedRequests(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = findUserByPrincipal(username);
         Enterprise ent = enterpriseRepository.findByOwnerId(user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Enterprise not found for user"));
         return collectionRequestRepository.findByEnterprise_IdAndStatusOrderByCreatedAtAsc(ent.getId(), CollectionStatus.ACCEPTED);
     }
 
     public CollectionRequest acceptRequest(@NonNull Long requestId, String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = findUserByPrincipal(username);
         Enterprise ent = enterpriseRepository.findByOwnerId(user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Enterprise not found for user"));
         
@@ -139,16 +127,19 @@ public class CollectionRequestService {
         CollectionRequest request = collectionRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy yêu cầu id: " + requestId));
 
-        if (!enterpriseId.equals(request.getEnterpriseId())) {
+        
+        if (request.getEnterpriseId() != null && !enterpriseId.equals(request.getEnterpriseId())) {
             throw new IllegalArgumentException("Enterprise không có quyền chấp nhận yêu cầu này");
         }
 
+        Enterprise enterprise = enterpriseRepository.findById(enterpriseId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy enterprise id: " + enterpriseId));
+
         CollectionStatus fromStatus = request.getStatus();
+        request.setEnterprise(enterprise);
         request.transitionTo(CollectionStatus.ACCEPTED);
         CollectionRequest saved = collectionRequestRepository.save(request);
 
-        Enterprise enterprise = enterpriseRepository.findById(enterpriseId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy enterprise id: " + enterpriseId));
         User changedBy = enterprise.getOwner();
         RequestStatusHistory history = RequestStatusHistory.builder()
                 .request(saved)
@@ -164,8 +155,7 @@ public class CollectionRequestService {
 
     @Transactional
     public CollectionRequest rejectRequest(@NonNull Long requestId, String username, String reason) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = findUserByPrincipal(username);
         Enterprise ent = enterpriseRepository.findByOwnerId(user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Enterprise not found for user"));
 
@@ -194,14 +184,33 @@ public class CollectionRequestService {
     }
 
     @Transactional
-    public CollectionRequest assignCollector(@NonNull Long requestId, @NonNull Long collectorId, String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    public CollectionRequest assignCollector(@NonNull Long requestId, @NonNull Long collectorUserId, String username) {
+        User user = findUserByPrincipal(username);
         Enterprise ent = enterpriseRepository.findByOwnerId(user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Enterprise not found for user"));
 
-        if (!collectorRepository.existsByIdAndEnterpriseId(collectorId, ent.getId())) {
-            throw new IllegalArgumentException("Collector " + collectorId + " không thuộc enterprise " + ent.getId());
+        User collectorUser = userRepository.findById(collectorUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy user collector id: " + collectorUserId));
+        if (collectorUser.getRole() != com.project.waste.enums.UserRole.COLLECTOR) {
+            throw new IllegalArgumentException("User " + collectorUserId + " không phải vai trò COLLECTOR");
+        }
+
+        if (!userRepository.existsById(collectorUserId)) {
+            throw new IllegalArgumentException("Collector không tồn tại");
+        }
+
+        
+        if (!enterpriseRepository.existsById(ent.getId())) {
+            throw new IllegalArgumentException("Enterprise không tồn tại");
+        }
+
+        
+        Collector collector = collectorRepository.findByUserIdAndEnterpriseId(collectorUserId, ent.getId())
+                .orElseGet(() -> collectorRepository.save(new Collector(null, ent.getId(), collectorUserId)));
+
+        
+        if (!ent.getId().equals(collector.getEnterpriseId())) {
+            throw new IllegalArgumentException("Collector " + collectorUserId + " không thuộc enterprise hiện tại");
         }
 
         CollectionRequest request = collectionRequestRepository.findById(requestId)
@@ -213,8 +222,6 @@ public class CollectionRequestService {
 
         CollectionStatus fromStatus = request.getStatus();
         request.transitionTo(CollectionStatus.ASSIGNED);
-        var collector = collectorRepository.findById(collectorId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy collector id: " + collectorId));
         request.setAssignedCollector(collector);
         CollectionRequest saved = collectionRequestRepository.save(request);
 
@@ -223,7 +230,7 @@ public class CollectionRequestService {
                 .fromStatus(fromStatus)
                 .toStatus(CollectionStatus.ASSIGNED)
                 .changedBy(user)
-                .note("Enterprise assigned collector")
+                .note("Enterprise assigned collector: " + collectorUserId)
                 .build();
         requestStatusHistoryRepository.save(Objects.requireNonNull(history));
 
@@ -231,41 +238,57 @@ public class CollectionRequestService {
     }
 
     public Page<CollectionRequest> getMyCollectorTasks(String username, int page) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        Collector collector = collectorRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalArgumentException("User is not a collector"));
-        return collectionRequestRepository.findByAssignedCollector_Id(collector.getId(), PageRequest.of(page, PAGE_SIZE, Sort.by("createdAt").descending()));
+        User user = findUserByPrincipal(username);
+        return collectionRequestRepository.findByAssignedCollectorUserId(
+                user.getId(), PageRequest.of(page, PAGE_SIZE, Sort.by("createdAt").descending()));
     }
 
     public List<CollectionRequest> getActiveCollectorTasks(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        Collector collector = collectorRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalArgumentException("User is not a collector"));
-        return collectionRequestRepository.findActiveTasksByCollector(collector.getId());
+        User user = findUserByPrincipal(username);
+        List<CollectionRequest> mine = collectionRequestRepository.findActiveTasksByCollectorUserId(user.getId());
+        if (!mine.isEmpty()) {
+            return mine;
+        }
+        
+        
+        return collectorRepository.findByUserId(user.getId())
+                .map(collector -> collectionRequestRepository.findActiveTasksByEnterpriseId(collector.getEnterpriseId()))
+                .orElse(java.util.Collections.emptyList());
     }
 
     public Page<CollectionRequest> getCollectorHistory(String username, int page) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        Collector collector = collectorRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalArgumentException("User is not a collector"));
-        return collectionRequestRepository.findHistoryByCollector(collector.getId(), PageRequest.of(page, PAGE_SIZE, Sort.by("updatedAt").descending()));
+        User user = findUserByPrincipal(username);
+        return collectionRequestRepository.findHistoryByCollectorUserId(
+                user.getId(), PageRequest.of(page, PAGE_SIZE, Sort.by("updatedAt").descending()));
     }
 
     @Transactional
     public CollectionRequest startCollection(@NonNull Long requestId, String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = findUserByPrincipal(username);
         Collector collector = collectorRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("User is not a collector"));
 
         CollectionRequest request = collectionRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy yêu cầu id: " + requestId));
 
-        if (request.getCollectorId() == null || !request.getCollectorId().equals(collector.getId())) {
-            throw new IllegalArgumentException("Yêu cầu không được gán cho collector này");
+        if (request.getAssignedCollector() == null) {
+            throw new IllegalArgumentException("Yêu cầu chưa được phân công collector");
+        }
+
+        Long assignedUserId = request.getAssignedCollector().getUserId();
+        if (assignedUserId == null) {
+            throw new IllegalArgumentException("Collector được gán không hợp lệ");
+        }
+
+        
+        if (!assignedUserId.equals(user.getId())) {
+            boolean sameEnterprise = request.getAssignedCollector().getEnterpriseId() != null
+                    && request.getAssignedCollector().getEnterpriseId().equals(collector.getEnterpriseId());
+            if (request.getStatus() == CollectionStatus.ASSIGNED && sameEnterprise) {
+                request.setAssignedCollector(collector);
+            } else {
+                throw new IllegalArgumentException("Yêu cầu không được gán cho collector này");
+            }
         }
 
         CollectionStatus fromStatus = request.getStatus();
@@ -286,15 +309,14 @@ public class CollectionRequestService {
 
     @Transactional
     public CollectionRequest completeCollection(@NonNull Long requestId, String username, String proofImageUrl) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        Collector collector = collectorRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalArgumentException("User is not a collector"));
+        User user = findUserByPrincipal(username);
 
         CollectionRequest request = collectionRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy yêu cầu id: " + requestId));
 
-        if (request.getCollectorId() == null || !request.getCollectorId().equals(collector.getId())) {
+        if (request.getAssignedCollector() == null
+                || request.getAssignedCollector().getUserId() == null
+                || !request.getAssignedCollector().getUserId().equals(user.getId())) {
             throw new IllegalArgumentException("Yêu cầu không được gán cho collector này");
         }
 
@@ -314,5 +336,11 @@ public class CollectionRequestService {
 
         eventPublisher.publishEvent(new CollectionCompletedEvent(this, saved));
         return saved;
+    }
+
+    private User findUserByPrincipal(String principal) {
+        return userRepository.findByUsername(principal)
+                .or(() -> userRepository.findByEmail(principal))
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy user: " + principal));
     }
 }

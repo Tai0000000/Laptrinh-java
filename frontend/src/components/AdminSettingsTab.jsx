@@ -7,7 +7,7 @@ export default function AdminSettingsTab() {
         adminEmail: "admin@ecocollect.com",
         maintenanceMode: false,
         allowNewRegistrations: true,
-        pointExchangeRate: 1000, // 1 point = 1000 VND
+        pointExchangeRate: 1000, 
         aiAutoClassification: true,
         notificationEnabled: true
     });
@@ -26,7 +26,7 @@ export default function AdminSettingsTab() {
 
     return (
         <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '32px', color: '#fff' }}>
-            {/* Header */}
+            {}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '700' }}>Cài đặt hệ thống</h1>
@@ -42,9 +42,9 @@ export default function AdminSettingsTab() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '24px' }}>
-                {/* Main Settings */}
+                {}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    {/* General Settings */}
+                    {}
                     <section style={{ background: '#111', borderRadius: '24px', padding: '24px', border: '1px solid #1f1f1f' }}>
                         <h3 style={{ margin: '0 0 24px', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <Globe size={20} color="#22c55e" />
@@ -70,7 +70,7 @@ export default function AdminSettingsTab() {
                         </div>
                     </section>
 
-                    {/* Operational Settings */}
+                    {}
                     <section style={{ background: '#111', borderRadius: '24px', padding: '24px', border: '1px solid #1f1f1f' }}>
                         <h3 style={{ margin: '0 0 24px', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <Shield size={20} color="#3b82f6" />
@@ -99,7 +99,7 @@ export default function AdminSettingsTab() {
                     </section>
                 </div>
 
-                {/* Sidebar Actions */}
+                {}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     <div style={{ background: '#111', borderRadius: '24px', padding: '24px', border: '1px solid #1f1f1f' }}>
                         <h3 style={{ margin: '0 0 20px', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -113,7 +113,7 @@ export default function AdminSettingsTab() {
                             </button>
                             <button style={{ background: '#ef444420', border: '1px solid #ef444440', color: '#ef4444', padding: '12px', borderRadius: '12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
                                 <Trash2 size={16} />
-                                Xóa Logs cũ (>30 ngày)
+                                Xóa Logs cũ (&gt;30 ngày)
                             </button>
                         </div>
                     </div>

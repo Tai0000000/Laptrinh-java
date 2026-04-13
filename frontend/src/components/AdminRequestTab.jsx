@@ -62,49 +62,49 @@ export default function AdminRequestTab() {
 
     useEffect(() => {
         let cancelled = false;
-        /*
-        setLoading(true);
-        setError(null);
+        
 
-        axiosClient
-            .get(`/admin/requests`)
-            .then((res) => {
-                if (cancelled) return;
-                const data = res?.data?.content || [];
-                setRequests(data);
-                if (!selectedRequestId && data.length > 0) {
-                    setSelectedRequestId(data[0].id);
-                }
-            })
-            .catch((e) => {
-                if (cancelled) return;
-                setError(e?.response?.data?.message || "Không tải được danh sách yêu cầu");
-            })
-            .finally(() => {
-                if (cancelled) return;
-                setLoading(false);
-            })
-        */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         return () => { cancelled = true; };
     }, []);
 
     useEffect(() => {
-        if (!selectedRequestId || selectedRequestId > 3) return; // Chỉ mock history cho 3 id đầu
+        if (!selectedRequestId || selectedRequestId > 3) return; 
         let cancelled = false;
-        /*
-        setError(null);
+        
 
-        axiosClient
-            .get(`/requests/${selectedRequestId}/history`)
-            .then((res) => {
-                if (cancelled) return;
-                setStatusHistory(Array.isArray(res?.data) ? res.data : []);
-            })
-            .catch((e) => {
-                if (cancelled) return;
-                setError(e?.response?.data?.message || "Không thể tải lịch sử trạng thái")
-            })
-        */
+
+
+
+
+
+
+
+
+
+
+
+
         return () => { cancelled = true; };
     }, [selectedRequestId]);
 
@@ -118,7 +118,7 @@ export default function AdminRequestTab() {
 
     return (
         <div style={{ padding: '32px', height: '100%', display: 'flex', flexDirection: 'column', gap: '24px', color: '#fff' }}>
-            {/* --- HEADER --- */}
+            {}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '700' }}>Yêu cầu thu gom</h1>
                 <div style={{ display: 'flex', gap: '12px' }}>
@@ -136,10 +136,10 @@ export default function AdminRequestTab() {
                 </div>
             </div>
 
-            {/* --- MASTER-DETAIL LAYOUT --- */}
+            {}
             <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '24px', flex: 1, minHeight: 0 }}>
 
-                {/* 1. CỘT TRÁI: Danh sách yêu cầu */}
+                {}
                 <div style={{ background: '#111', borderRadius: '24px', border: '1px solid #1f1f1f', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                     <div style={{ padding: '20px', borderBottom: '1px solid #1f1f1f' }}>
                         <h3 style={{ margin: 0, fontSize: '16px' }}>Danh sách báo cáo</h3>
@@ -181,12 +181,12 @@ export default function AdminRequestTab() {
                     </div>
                 </div>
 
-                {/* 2. CỘT PHẢI: Chi tiết */}
+                {}
                 <div style={{ background: '#111', borderRadius: '24px', border: '1px solid #1f1f1f', padding: '32px', overflowY: 'auto' }}>
                     {selectedRequest ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-                            {/* Header Chi tiết */}
+                            {}
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #1f1f1f', paddingBottom: '20px' }}>
                                 <div>
                                     <h2 style={{ margin: '0 0 12px', fontSize: '24px' }}>Chi tiết báo cáo #{selectedRequest.id}</h2>
@@ -204,7 +204,7 @@ export default function AdminRequestTab() {
                                 </div>
                             </div>
 
-                            {/* Grid 2 cột: Vị trí & Người gửi */}
+                            {}
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                                 <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '16px', border: '1px solid #222' }}>
                                     <h4 style={{ margin: '0 0 12px', color: '#888', fontSize: '12px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -221,7 +221,7 @@ export default function AdminRequestTab() {
                                 </div>
                             </div>
 
-                            {/* Mô tả */}
+                            {}
                             <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '16px', border: '1px solid #222' }}>
                                 <h4 style={{ margin: '0 0 12px', color: '#888', fontSize: '12px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                     <FileText size={14} /> Mô tả rác thải
@@ -229,7 +229,7 @@ export default function AdminRequestTab() {
                                 <div style={{ fontSize: '14px', lineHeight: '1.6', color: '#ddd' }}>{selectedRequest.description}</div>
                             </div>
 
-                            {/* Hình ảnh đính kèm */}
+                            {}
                             <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '16px', border: '1px solid #222' }}>
                                 <h4 style={{ margin: '0 0 16px', color: '#888', fontSize: '12px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                     <ImageIcon size={14} /> Ảnh đính kèm
@@ -240,7 +240,7 @@ export default function AdminRequestTab() {
                                     style={{ maxWidth: '300px', width: '100%', borderRadius: '12px', border: '1px solid #333' }}
                                 />
                             </div>
-                            {/* Lich su xu ly */}
+                            {}
                              <div>
                                 <h3 style={{ margin: '0 0 20px', fontSize: '18px' }}>Lịch sử xử lý</h3>
                                 <div style={{ background: '#1a1a1a', padding: '24px', borderRadius: '16px', border: '1px solid #222' }}>

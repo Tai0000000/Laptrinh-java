@@ -20,7 +20,7 @@ export default function Register() {
   const [confirmPasswordError, setConfirmPasswordError] = React.useState("");
 
   const validateData = (name, value) => {
-    // Tạo đối tượng chứa lỗi
+    
     const errorsMessage = {
       username: "Tên không được để trống",
       email: {
@@ -34,7 +34,7 @@ export default function Register() {
       },
     };
 
-    // Đối tượng chứa các hàm cập nhật lỗi
+    
     const errorSetters = {
       username: setUsernameError,
       email: setEmailError,
@@ -43,19 +43,19 @@ export default function Register() {
     };
     const errorSetter = errorSetters[name];
 
-    // Check rỗng
+    
     if (!value) {
       errorSetter(errorsMessage[name].empty || errorsMessage[name]);
       return false;
     }
 
-    // Check email
+    
     if (name === "email" && !validateEmail(value)) {
       errorSetter(errorsMessage.email.inValid);
       return false;
     }
 
-    // Check confirm password
+    
     if (name === "confirmPassword" && value !== user.password) {
       setConfirmPasswordError(errorsMessage.confirmPassword.noMatch);
       return false;
@@ -71,7 +71,7 @@ export default function Register() {
 
     validateData(name, value);
 
-    // Nếu đổi password, check lại confirmPassword
+    
     if (name === "password" && user.confirmPassword) {
       validateData("confirmPassword", user.confirmPassword);
     }
@@ -102,7 +102,7 @@ export default function Register() {
           description: "Đăng ký tài khoản thành công",
         });
 
-        // navigate("/login");
+        
       } catch (error) {
         const statusCode = error?.response?.status;
         const errorMessage = error?.response?.data?.message || "Có lỗi xảy ra";

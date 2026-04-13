@@ -22,7 +22,7 @@ public class RequestStatusHistory {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "from_status")
-    private CollectionStatus fromStatus;  // null khi tạo mới
+    private CollectionStatus fromStatus;  
 
     @Enumerated(EnumType.STRING)
     @Column(name = "to_status", nullable = false)

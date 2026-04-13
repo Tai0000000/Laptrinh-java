@@ -27,11 +27,28 @@ public class EnterpriseService {
     private final PointRuleRepository pointRuleRepo;
     private final CollectionRequestRepository requestRepo;
     private final ComplaintRepository complaintRepo;
+    private final CollectorRepository collectorRepo;
 
+    @Transactional
     public Enterprise getMyEnterprise(String ownerEmail) {
         User owner = findUser(ownerEmail);
         return enterpriseRepo.findByOwnerId(owner.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Enterprise chưa được tạo"));
+                .orElseGet(() -> {
+                    if (owner.getRole() != UserRole.ENTERPRISE) {
+                        throw new ResourceNotFoundException("Enterprise chưa được tạo");
+                    }
+                    
+                    return enterpriseRepo.save(Enterprise.builder()
+                            .owner(owner)
+                            .companyName((owner.getFullName() == null || owner.getFullName().isBlank()
+                                    ? owner.getUsername()
+                                    : owner.getFullName()) + " Enterprise")
+                            .acceptedWasteTypes("ORGANIC,RECYCLABLE,HAZARDOUS,GENERAL,ELECTRONIC")
+                            .serviceArea(owner.getCity())
+                            .address(owner.getCity() != null ? owner.getCity() : "TP.HCM")
+                            .verified(true)
+                            .build());
+                });
     }
 
     public Page<Complaint> getMyComplaints(String ownerEmail, int page) {
@@ -72,16 +89,17 @@ public class EnterpriseService {
                 .serviceArea(serviceArea)
                 .maxCapacityKg(maxCapacityKg)
                 .address(address)
+                .verified(true) 
                 .build()));
     }
 
     @Transactional
     public void addCollector(String ownerEmail, @NonNull Long collectorId) {
         Enterprise enterprise = getMyEnterprise(ownerEmail);
-        User collector = userRepo.findById(collectorId)
+        User collectorUser = userRepo.findById(collectorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Collector không tồn tại"));
 
-        if (collector.getRole() != UserRole.COLLECTOR) {
+        if (collectorUser.getRole() != UserRole.COLLECTOR) {
             throw new UnauthorizedActionException("User này không phải Collector");
         }
         if (ecRepo.existsByEnterpriseIdAndCollectorId(enterprise.getId(), collectorId)) {
@@ -91,7 +109,12 @@ public class EnterpriseService {
         EnterpriseCollector.EnterpriseCollectorId id =
                 new EnterpriseCollector.EnterpriseCollectorId(enterprise.getId(), collectorId);
         ecRepo.save(Objects.requireNonNull(EnterpriseCollector.builder()
-                .id(id).enterprise(enterprise).collector(collector).build()));
+                .id(id).enterprise(enterprise).collector(collectorUser).build()));
+
+        
+        if (collectorRepo.findByUserId(collectorId).isEmpty()) {
+            collectorRepo.save(new Collector(null, enterprise.getId(), collectorId));
+        }
     }
 
     @Transactional
@@ -108,7 +131,12 @@ public class EnterpriseService {
 
     public List<User> getMyCollectors(String ownerEmail) {
         Enterprise enterprise = getMyEnterprise(ownerEmail);
-        return ecRepo.findCollectorsByEnterpriseId(enterprise.getId());
+        List<User> mappedCollectors = ecRepo.findCollectorsByEnterpriseId(enterprise.getId());
+        if (!mappedCollectors.isEmpty()) {
+            return mappedCollectors;
+        }
+        
+        return userRepo.findByRole(UserRole.COLLECTOR);
     }
 
     @Transactional
@@ -169,8 +197,9 @@ public class EnterpriseService {
         );
     }
 
-    private User findUser(String email) {
-        return userRepo.findByEmail(email)
+    private User findUser(String principal) {
+        return userRepo.findByEmail(principal)
+                .or(() -> userRepo.findByUsername(principal))
                 .orElseThrow(() -> new ResourceNotFoundException("User không tồn tại"));
     }
 }

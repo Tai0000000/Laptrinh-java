@@ -56,7 +56,7 @@ export default function StatusTimeline({ history, dark = false }) {
               position: 'relative'
             }}
           >
-            {/* Line connector */}
+            {}
             {idx < statuses.length - 1 && (
               <div style={{
                 position: 'absolute',

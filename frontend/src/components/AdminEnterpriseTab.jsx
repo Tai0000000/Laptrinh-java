@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axiosClient from '../api/axiosClient';
-import { Search, Building2, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Search, Building2 } from 'lucide-react';
 
 export default function AdminEnterpriseTab() {
     const [enterprises, setEnterprises] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [search, setSearch] = useState("");
-    const [verifiedFilter, setVerifiedFilter] = useState("");
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
 
@@ -18,8 +17,7 @@ export default function AdminEnterpriseTab() {
         const params = {
             page: page,
             size: 10,
-            search: search || undefined,
-            verified: verifiedFilter === "" ? undefined : verifiedFilter === "true"
+            search: search || undefined
         };
 
         axiosClient
@@ -43,25 +41,12 @@ export default function AdminEnterpriseTab() {
         }, 500);
 
         return () => clearTimeout(delayDebounceFn);
-    }, [search, verifiedFilter, page]);
-
-    const handleVerify = (enterpriseId) => {
-        axiosClient.patch(`/admin/enterprises/${enterpriseId}/verify`)
-            .then(() => {
-                setEnterprises(enterprises.map(e => e.id === enterpriseId ? { ...e, verified: true } : e));
-                alert("✅ Duyệt doanh nghiệp thành công!");
-            })
-            .catch(e => alert("❌ Lỗi khi duyệt doanh nghiệp"));
-    };
+    }, [search, page]);
 
     const handleReject = (enterpriseId) => {
         if (window.confirm("Bạn có chắc chắn muốn từ chối doanh nghiệp này không?")) {
-            axiosClient.patch(`/admin/enterprises/${enterpriseId}/reject`)
-                .then(() => {
-                    setEnterprises(enterprises.filter(e => e.id !== enterpriseId));
-                    alert("🗑️ Đã từ chối doanh nghiệp thành công.");
-                })
-                .catch(e => alert("❌ Lỗi khi từ chối doanh nghiệp"));
+            
+            alert("Tính năng này đã được cập nhật.");
         }
     };
 
@@ -82,15 +67,6 @@ export default function AdminEnterpriseTab() {
                             style={{ background: '#111', border: '1px solid #1f1f1f', borderRadius: '10px', padding: '10px 16px 10px 40px', color: '#fff', width: '280px' }}
                         />
                     </div>
-                    <select 
-                        value={verifiedFilter}
-                        onChange={(e) => { setVerifiedFilter(e.target.value); setPage(0); }}
-                        style={{ background: '#111', border: '1px solid #1f1f1f', borderRadius: '10px', padding: '10px 16px', color: '#fff' }}
-                    >
-                        <option value="">Tất cả trạng thái</option>
-                        <option value="true">Đã duyệt</option>
-                        <option value="false">Chưa duyệt</option>
-                    </select>
                 </div>
             </div>
 
@@ -100,14 +76,13 @@ export default function AdminEnterpriseTab() {
                     <tr style={{ background: '#0a0a0a', borderBottom: '1px solid #1f1f1f', color: '#ffffff', fontSize: '13px', textTransform: 'uppercase' }}>
                         <th style={{ padding: '20px 24px' }}>Doanh nghiệp</th>
                         <th style={{ padding: '20px 24px' }}>Dịch vụ</th>
-                        <th style={{ padding: '20px 24px' }}>Trạng thái</th>
-                        <th style={{ padding: '20px 24px' }}>Hành động</th>
+                        <th style={{ padding: '20px 24px' }}>Địa chỉ</th>
                     </tr>
                     </thead>
                     <tbody>
-                    {loading && <tr><td colSpan="4" style={{ padding: '40px', textAlign: 'center', color: '#666' }}>Đang tải danh sách...</td></tr>}
-                    {!loading && error && <tr><td colSpan="4" style={{ padding: '40px', textAlign: 'center', color: '#ef4444' }}>{error}</td></tr>}
-                    {!loading && enterprises.length === 0 && !error && <tr><td colSpan="4" style={{ padding: '40px', textAlign: 'center', color: '#666' }}>Không tìm thấy doanh nghiệp nào.</td></tr>}
+                    {loading && <tr><td colSpan="3" style={{ padding: '40px', textAlign: 'center', color: '#666' }}>Đang tải danh sách...</td></tr>}
+                    {!loading && error && <tr><td colSpan="3" style={{ padding: '40px', textAlign: 'center', color: '#ef4444' }}>{error}</td></tr>}
+                    {!loading && enterprises.length === 0 && !error && <tr><td colSpan="3" style={{ padding: '40px', textAlign: 'center', color: '#666' }}>Không tìm thấy doanh nghiệp nào.</td></tr>}
 
                     {enterprises.map((e) => (
                         <tr key={e.id} style={{ borderBottom: '1px solid #1f1f1f' }}>
@@ -115,7 +90,6 @@ export default function AdminEnterpriseTab() {
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                     <div style={{ fontWeight: '600', color: '#fff' }}>{e.companyName}</div>
                                     <div style={{ fontSize: '12px', color: '#888' }}>ID: {e.id} | MST: {e.licenseNumber || 'Chưa cập nhật'}</div>
-                                    <div style={{ fontSize: '12px', color: '#666' }}>{e.address}</div>
                                 </div>
                             </td>
                             <td style={{ padding: '16px 24px' }}>
@@ -125,38 +99,8 @@ export default function AdminEnterpriseTab() {
                                     ))}
                                 </div>
                             </td>
-                            <td style={{ padding: '16px 24px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    {e.verified ? (
-                                        <>
-                                            <ShieldCheck size={18} color="#22c55e" />
-                                            <span style={{ fontSize: '13px', color: '#22c55e' }}>Đã xác minh</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <AlertCircle size={18} color="#eab308" />
-                                            <span style={{ fontSize: '13px', color: '#eab308' }}>Chờ duyệt</span>
-                                        </>
-                                    )}
-                                </div>
-                            </td>
-                            <td style={{ padding: '16px 24px' }}>
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    {!e.verified && (
-                                        <button 
-                                            onClick={() => handleVerify(e.id)}
-                                            style={{ background: '#22c55e20', color: '#22c55e', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
-                                        >
-                                            Duyệt
-                                        </button>
-                                    )}
-                                    <button 
-                                        onClick={() => handleReject(e.id)}
-                                        style={{ background: '#ef444420', color: '#ef4444', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
-                                    >
-                                        Từ chối
-                                    </button>
-                                </div>
+                            <td style={{ padding: '16px 24px', fontSize: '13px', color: '#888' }}>
+                                {e.address}
                             </td>
                         </tr>
                     ))}
@@ -164,7 +108,7 @@ export default function AdminEnterpriseTab() {
                 </table>
             </div>
 
-            {/* Pagination */}
+            {}
             {totalPages > 1 && (
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '12px' }}>
                     <button 

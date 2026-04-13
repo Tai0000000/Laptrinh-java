@@ -25,8 +25,8 @@ export default function AdminMapTab() {
             .catch(() => setLoading(false));
     }, []);
 
-    // Simple coordinate normalization for visualization
-    // We'll assume a bounding box around TP.HCM for this mock visualization
+    
+    
     const minLat = 10.7;
     const maxLat = 10.9;
     const minLng = 106.6;
@@ -49,7 +49,7 @@ export default function AdminMapTab() {
 
     return (
         <div style={{ padding: '32px', height: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column', gap: '24px', color: '#fff' }}>
-            {/* Header */}
+            {}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '700' }}>Bản đồ trực tuyến</h1>
                 <div style={{ display: 'flex', gap: '12px' }}>
@@ -70,7 +70,7 @@ export default function AdminMapTab() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '24px', flex: 1, minHeight: 0 }}>
-                {/* Map Area */}
+                {}
                 <div style={{ 
                     background: '#111', 
                     borderRadius: '24px', 
@@ -80,17 +80,17 @@ export default function AdminMapTab() {
                     backgroundImage: 'radial-gradient(#1f1f1f 1px, transparent 1px)',
                     backgroundSize: '40px 40px'
                 }}>
-                    {/* Grid labels */}
+                    {}
                     <div style={{ position: 'absolute', top: '10px', left: '10px', fontSize: '12px', color: '#444', fontWeight: 'bold' }}>TP. HỒ CHÍ MINH - REALTIME VIEW</div>
                     
-                    {/* Markers */}
+                    {}
                     {loading ? (
                         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate( -50%, -50% )', color: '#666' }}>Đang nạp dữ liệu bản đồ...</div>
                     ) : (
                         filteredRequests.map(req => {
                             const x = getX(req.longitude);
                             const y = getY(req.latitude);
-                            // Only show if within our mock bounds
+                            
                             if (x < 0 || x > 100 || y < 0 || y > 100) return null;
 
                             return (
@@ -137,14 +137,14 @@ export default function AdminMapTab() {
                         })
                     )}
 
-                    {/* Map Controls */}
+                    {}
                     <div style={{ position: 'absolute', bottom: '24px', right: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <div style={{ padding: '10px', background: '#1a1a1a', borderRadius: '12px', border: '1px solid #333', cursor: 'pointer' }}><ZoomIn size={20} /></div>
                         <div style={{ padding: '10px', background: '#1a1a1a', borderRadius: '12px', border: '1px solid #333', cursor: 'pointer' }}><ZoomOut size={20} /></div>
                         <div style={{ padding: '10px', background: '#1a1a1a', borderRadius: '12px', border: '1px solid #333', cursor: 'pointer', marginTop: '12px' }}><Layers size={20} /></div>
                     </div>
 
-                    {/* Legend */}
+                    {}
                     <div style={{ position: 'absolute', bottom: '24px', left: '24px', background: '#111111aa', backdropFilter: 'blur(8px)', padding: '16px', borderRadius: '16px', border: '1px solid #1f1f1f', display: 'flex', gap: '16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
                             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b' }} />
@@ -161,7 +161,7 @@ export default function AdminMapTab() {
                     </div>
                 </div>
 
-                {/* Info Panel */}
+                {}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     <div style={{ background: '#111', borderRadius: '24px', border: '1px solid #1f1f1f', flex: 1, padding: '24px', display: 'flex', flexDirection: 'column' }}>
                         <h3 style={{ margin: '0 0 20px', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}>

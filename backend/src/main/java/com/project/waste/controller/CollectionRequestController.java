@@ -13,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,10 +27,15 @@ public class CollectionRequestController {
 
     @PostMapping
     @PreAuthorize("hasRole('CITIZEN')")
-    public ResponseEntity<CollectionRequest> createRequest(
+    public ResponseEntity<Map<String, Object>> createRequest(
             @Valid @RequestBody CreateCollectionRequest dto,
             @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(service.createRequest(userDetails.getUsername(), dto));
+        CollectionRequest created = service.createRequest(userDetails.getUsername(), dto);
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("id", created.getId());
+        payload.put("status", created.getStatus() != null ? created.getStatus().name() : null);
+        payload.put("message", "Tạo yêu cầu thu gom thành công");
+        return ResponseEntity.ok(payload);
     }
 
     @GetMapping("/my")

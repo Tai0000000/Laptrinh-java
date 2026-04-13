@@ -29,7 +29,7 @@ public class Complaint {
     @Column(nullable = false)
     private String content;
 
-    // OPEN, RESOLVED, DISMISSED
+    
     @Column(nullable = false)
     @Builder.Default
     private String status = "OPEN";

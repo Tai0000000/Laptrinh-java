@@ -15,16 +15,28 @@ public interface CollectionRequestRepository extends JpaRepository<CollectionReq
 
     Page<CollectionRequest> findByCitizen_Id(Long citizenId, Pageable pageable);
     List<CollectionRequest> findByStatusOrderByCreatedAtAsc(CollectionStatus status);
+    List<CollectionRequest> findByEnterpriseIsNullAndStatusOrderByCreatedAtAsc(CollectionStatus status);
     Page<CollectionRequest> findByEnterprise_Id(Long enterpriseId, Pageable pageable);
     Page<CollectionRequest> findByAssignedCollector_Id(Long collectorId, Pageable pageable);
+    @Query("SELECT r FROM CollectionRequest r WHERE r.assignedCollector.userId = :uid ORDER BY r.createdAt DESC")
+    Page<CollectionRequest> findByAssignedCollectorUserId(@Param("uid") Long userId, Pageable pageable);
 
     @Query("SELECT r FROM CollectionRequest r WHERE r.assignedCollector.id = :cid " +
            "AND r.status IN ('ASSIGNED', 'ON_THE_WAY') ORDER BY r.createdAt ASC")
     List<CollectionRequest> findActiveTasksByCollector(@Param("cid") Long collectorId);
+    @Query("SELECT r FROM CollectionRequest r WHERE r.assignedCollector.userId = :uid " +
+            "AND r.status IN ('ASSIGNED', 'ON_THE_WAY') ORDER BY r.createdAt ASC")
+    List<CollectionRequest> findActiveTasksByCollectorUserId(@Param("uid") Long userId);
+    @Query("SELECT r FROM CollectionRequest r WHERE r.assignedCollector.enterpriseId = :eid " +
+            "AND r.status IN ('ASSIGNED', 'ON_THE_WAY') ORDER BY r.createdAt ASC")
+    List<CollectionRequest> findActiveTasksByEnterpriseId(@Param("eid") Long enterpriseId);
 
     @Query("SELECT r FROM CollectionRequest r WHERE r.assignedCollector.id = :cid " +
            "AND r.status = 'COLLECTED' ORDER BY r.updatedAt DESC")
     Page<CollectionRequest> findHistoryByCollector(@Param("cid") Long collectorId, Pageable pageable);
+    @Query("SELECT r FROM CollectionRequest r WHERE r.assignedCollector.userId = :uid " +
+            "AND r.status = 'COLLECTED' ORDER BY r.updatedAt DESC")
+    Page<CollectionRequest> findHistoryByCollectorUserId(@Param("uid") Long userId, Pageable pageable);
 
     @Query("SELECT r.wasteType, COUNT(r) FROM CollectionRequest r " +
            "WHERE r.enterprise.id = :eid AND r.status = 'COLLECTED' " +

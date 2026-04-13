@@ -7,4 +7,5 @@ import java.util.Optional;
 public interface CollectorRepository extends JpaRepository<Collector, Long> {
     boolean existsByIdAndEnterpriseId(Long id, Long enterpriseId);
     Optional<Collector> findByUserId(Long userId);
+    Optional<Collector> findByUserIdAndEnterpriseId(Long userId, Long enterpriseId);
 }

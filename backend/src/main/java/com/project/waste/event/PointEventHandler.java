@@ -11,21 +11,21 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.Objects;
 
-@Component("simplePointEventHandler")// Thanh phan he thong
+@Component("simplePointEventHandler")
 public class PointEventHandler {
 
     @Autowired
     private UserRepository userRepository;
 
-    // Event PointEven: Chi khi DB commit giao dich moi cong diem
+    
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePointAddition(@NonNull PointEvent event) {
 
-        // Tim kiem nguoi dung
+        
         User user = userRepository.findById(Objects.requireNonNull(event.getUserId()))
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user để cộng điểm!"));
 
-        //Ham kiem tra gia tri diem trong data
+        
         int currentPoints = user.getTotalPoints(); 
         int newTotal = currentPoints + event.getPoints();
 

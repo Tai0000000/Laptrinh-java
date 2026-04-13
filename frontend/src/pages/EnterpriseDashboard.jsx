@@ -113,7 +113,25 @@ export default function EnterpriseDashboard() {
       statsResult,
       pendingResult,
       acceptedResult
-    ].find((result) => result.status === 'rejected');
+    ].find((result) => {
+        if (result.status === 'rejected') {
+            const status = result.reason?.response?.status;
+            const url = result.reason?.config?.url;
+            
+            
+            
+            const isNoEnterprise = enterpriseResult.status === 'rejected' && enterpriseResult.reason?.response?.status === 404;
+            
+            if (isNoEnterprise && status === 404) {
+                return false; 
+            }
+            
+            
+            const isMe404 = status === 404 && url?.includes('/enterprise/me');
+            return !isMe404;
+        }
+        return false;
+    });
 
     if (firstRejected) {
       setError(firstRejected.reason?.response?.data?.message || 'Không tải được toàn bộ dữ liệu doanh nghiệp');
@@ -145,6 +163,17 @@ export default function EnterpriseDashboard() {
       await loadDashboard();
     } catch (requestError) {
       alert(requestError?.response?.data?.message || 'Không thể xử lý khiếu nại');
+    }
+  };
+
+  const handleAssignCollector = async (requestId, collectorId) => {
+    if (!collectorId) return;
+    try {
+      await axiosClient.post(`/requests/${requestId}/assign`, { collectorId: Number(collectorId) });
+      alert("Đã phân công nhân viên thành công");
+      await loadDashboard();
+    } catch (requestError) {
+      alert(requestError?.response?.data?.message || 'Không thể phân công nhân viên');
     }
   };
 
@@ -184,9 +213,6 @@ export default function EnterpriseDashboard() {
           <div style={{ ...cardStyle, padding: '16px' }}>
             <div style={{ color: '#666', fontSize: '12px', marginBottom: '6px' }}>Doanh nghiệp</div>
             <div style={{ fontWeight: '600' }}>{enterprise?.companyName || 'Chưa đăng ký hồ sơ doanh nghiệp'}</div>
-            <div style={{ color: enterprise?.verified ? '#22c55e' : '#f59e0b', fontSize: '13px', marginTop: '6px' }}>
-              {enterprise?.verified ? 'Đã xác minh' : 'Chưa xác minh'}
-            </div>
           </div>
         </div>
 
@@ -215,7 +241,7 @@ export default function EnterpriseDashboard() {
           <div>
             <h1 style={{ margin: 0, fontSize: '32px' }}>Bảng điều khiển doanh nghiệp</h1>
             <p style={{ margin: '8px 0 0', color: '#888' }}>
-              Theo dõi yêu cầu thu gom, đội thu gom và trạng thái hồ sơ doanh nghiệp.
+              Theo dõi yêu cầu thu gom và quản lý đội ngũ nhân viên.
             </p>
           </div>
         </div>
@@ -313,8 +339,32 @@ export default function EnterpriseDashboard() {
                 )}
                 {acceptedRequests.slice(0, 5).map((request) => (
                   <div key={request.id} style={{ border: '1px solid #1f1f1f', borderRadius: '12px', padding: '14px 16px' }}>
-                    <div style={{ fontWeight: '600' }}>#{request.id} · {request.wasteType}</div>
-                    <div style={{ color: '#888', fontSize: '13px', marginTop: '4px' }}>{request.addressText || 'Chưa có địa chỉ'}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <div style={{ fontWeight: '600' }}>#{request.id} · {request.wasteType}</div>
+                        <span style={{ fontSize: '12px', color: '#22c55e' }}>Đã tiếp nhận</span>
+                    </div>
+                    <div style={{ color: '#888', fontSize: '13px', marginBottom: '12px' }}>{request.addressText || 'Chưa có địa chỉ'}</div>
+                    
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <select 
+                            onChange={(e) => handleAssignCollector(request.id, e.target.value)}
+                            defaultValue=""
+                            style={{ 
+                                flex: 1,
+                                background: '#1a1a1a', 
+                                color: '#fff', 
+                                border: '1px solid #333', 
+                                borderRadius: '8px', 
+                                padding: '8px',
+                                fontSize: '13px'
+                            }}
+                        >
+                            <option value="" disabled>Chọn nhân viên phân công...</option>
+                            {collectors.map(c => (
+                                <option key={c.id} value={c.id}>{c.fullName || c.username}</option>
+                            ))}
+                        </select>
+                    </div>
                   </div>
                 ))}
               </div>

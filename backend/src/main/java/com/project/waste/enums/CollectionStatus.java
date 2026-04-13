@@ -9,9 +9,9 @@ public enum CollectionStatus {
     COLLECTED,
     CANCELLED;
 
-    /**
-     * @param next trạng thái đích; {@code null} hoặc trùng trạng thái hiện tại → không hợp lệ
-     */
+    
+
+
     public boolean canTransitionTo(CollectionStatus next) {
         if (next == null || this == next) {
             return false;

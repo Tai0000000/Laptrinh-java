@@ -176,7 +176,7 @@ export default function AdminUserTab() {
                 </table>
             </div>
 
-            {/* Pagination */}
+            {}
             {totalPages > 1 && (
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '12px' }}>
                     <button 

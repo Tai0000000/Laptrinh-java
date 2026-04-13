@@ -58,7 +58,7 @@ const StatCard = ({ title, value, subtitle, trend, icon, color, trendColor }) =>
         {icon}
       </div>
     </div>
-    {/* Colored line on the side */}
+    {}
     <div style={{ 
       position: 'absolute', 
       left: 0, 
@@ -109,7 +109,7 @@ export default function AdminOverviewTab() {
 
     return (
         <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
-            {/* Header */}
+            {}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '700' }}>Tổng quan</h1>
@@ -135,7 +135,7 @@ export default function AdminOverviewTab() {
                 </div>
             </div>
 
-            {/* Stats Grid */}
+            {}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
                 <StatCard 
                     title="Tổng yêu cầu" 
@@ -167,9 +167,9 @@ export default function AdminOverviewTab() {
                 />
             </div>
 
-            {/* Content Section */}
+            {}
             <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px' }}>
-                {/* Chart */}
+                {}
                 <div style={{ background: '#111', borderRadius: '24px', padding: '24px', border: '1px solid #1f1f1f' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                         <h3 style={{ margin: 0, fontSize: '18px' }}>Xu hướng thu gom</h3>
@@ -195,7 +195,7 @@ export default function AdminOverviewTab() {
                     </div>
                 </div>
 
-                {/* Secondary Stats */}
+                {}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div style={{ background: '#111', borderRadius: '24px', padding: '24px', border: '1px solid #1f1f1f', flex: 1 }}>
                         <h3 style={{ margin: 0, fontSize: '18px', marginBottom: '20px' }}>Phân bổ người dùng</h3>
