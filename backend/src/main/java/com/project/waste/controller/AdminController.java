@@ -4,6 +4,7 @@ import com.project.waste.dto.AdminEnterpriseDto;
 import com.project.waste.dto.EnterpriseComplaintDto;
 import com.project.waste.enums.UserRole;
 import com.project.waste.model.*;
+import com.project.waste.repository.CollectionRequestRepository;
 import com.project.waste.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +23,8 @@ import java.util.Map;
 public class AdminController {
 
     private final AdminService adminService;
+
+    private final CollectionRequestRepository requestRepository;
 
     @GetMapping("/overview")
     public ResponseEntity<Map<String, Object>> overview() {
@@ -76,9 +79,8 @@ public class AdminController {
     }
 
     @GetMapping("/complaints")
-    public ResponseEntity<Page<EnterpriseComplaintDto>> getOpenComplaints(
-            @RequestParam(defaultValue = "0") int page) {
-        return ResponseEntity.ok(adminService.getOpenComplaints(page));
+    public ResponseEntity<?> getComplaints(@RequestParam(defaultValue = "0") int page) {
+        return ResponseEntity.ok(adminService.getAllComplaints(page));
     }
 
     @PostMapping("/complaints/{id}/resolve")
@@ -89,5 +91,19 @@ public class AdminController {
         boolean dismiss = Boolean.TRUE.equals(body.get("dismiss"));
         return ResponseEntity.ok(adminService.resolveComplaint(
                 id, ud.getUsername(), (String) body.get("resolution"), dismiss));
+    }
+
+    // hủy yêu cầu
+    @PutMapping("/requests/{id}/status")
+    public ResponseEntity<?> updateRequestStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> requestBody) {
+
+        String newStatus = requestBody.get("status");
+        String note = requestBody.get("note");
+
+        adminService.updateRequestStatus(id, newStatus, note);
+
+        return ResponseEntity.ok("Cập nhật trạng thái thành công");
     }
 }

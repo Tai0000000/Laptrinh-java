@@ -1,5 +1,7 @@
 package com.project.waste.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -7,6 +9,7 @@ import com.project.waste.enums.CollectionStatus;
 
 @Entity
 @Table(name = "request_status_history")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
@@ -16,6 +19,7 @@ public class RequestStatusHistory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "request_id", nullable = false)
     private CollectionRequest request;

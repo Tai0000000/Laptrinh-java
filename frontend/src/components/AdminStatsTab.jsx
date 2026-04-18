@@ -5,6 +5,8 @@ import {
 } from 'recharts';
 import { Download, TrendingUp, Package, Users, Building2 } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const COLORS = ['#22c55e', '#3b82f6', '#eab308', '#ef4444', '#a855f7'];
 
@@ -12,6 +14,8 @@ export default function AdminStatsTab() {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isHovered, setIsHovered] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -40,17 +44,63 @@ export default function AdminStatsTab() {
 
     const trendData = Array.isArray(stats.last7DaysTrend) ? stats.last7DaysTrend : [];
 
+    // Nút xuất báo cáo
+    const exportPDF = () => {
+        if (isExporting) return;
+        setIsExporting(true);
+
+        setTimeout(() => {
+            const input = document.getElementById('report-container');
+            html2canvas(input, { scale: 2 }).then((canvas) => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save("thong-ke-he-thong.pdf");
+            }).catch(err => {
+                console.error("Lỗi:", err);
+                alert("Có lỗi xảy ra khi xuất PDF!");
+            }).finally(() => {
+                setIsExporting(false);
+            });
+        }, 50);
+    };
+
     return (
-        <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '32px', color: '#fff' }}>
+        <div id="report-container" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '32px', color: '#fff' }}>
             {}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '700' }}>Phân tích & Thống kê</h1>
                     <p style={{ margin: '4px 0 0', color: '#666', fontSize: '14px' }}>Dữ liệu chi tiết về hệ thống EcoCollect</p>
                 </div>
-                <button style={{ background: '#22c55e', color: '#000', border: 'none', borderRadius: '10px', padding: '10px 20px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <button
+                    onClick={exportPDF}
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                    disabled={isExporting}
+                    style={{
+                        background: isHovered ? '#16a34a' : '#22c55e',
+                        color: '#000',
+                        border: 'none',
+                        borderRadius: '10px',
+                        padding: '10px 20px',
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: isExporting ? 'wait' : 'pointer',
+                        transition: 'all 0.2s ease',
+                        opacity: isExporting ? 0.7 : 1,
+                        transform: isHovered && !isExporting ? 'translateY(-2px)' : 'none',
+                        boxShadow: isHovered && !isExporting ? '0 4px 12px rgba(34, 197, 94, 0.3)' : 'none'
+                    }}
+                >
                     <Download size={18} />
-                    <span>Tải báo cáo PDF</span>
+                    <span>{isExporting ? 'Đang xử lý...' : 'Tải báo cáo PDF'}</span>
                 </button>
             </div>
 

@@ -1,6 +1,8 @@
 package com.project.waste.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -8,6 +10,9 @@ import com.project.waste.enums.CollectionStatus;
 import com.project.waste.enums.WasteType;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.HashMap;
 
 @Entity
 @Table(name = "collection_requests")
@@ -23,7 +28,7 @@ public class CollectionRequest {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "citizen_id", nullable = false)
-    @JsonIgnore
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "passwordHash", "requests"})
     private User citizen;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -129,3 +134,4 @@ public class CollectionRequest {
         this.status = newStatus;
     }
 }
+
