@@ -25,8 +25,6 @@ import {
   Legend 
 } from 'recharts';
 import axiosClient from '../api/axiosClient';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 const StatCard = ({ title, value, subtitle, trend, icon, color, trendColor }) => (
   <div style={{ 
@@ -116,29 +114,14 @@ export default function AdminOverviewTab() {
         ? stats.wasteByWeekdayLast7Days
         : [{ name: '—', recyclable: 0, organic: 0, hazardous: 0, general: 0, electronic: 0 }];
 
-    // Nút xuất báo cáo
-    const exportPDF = () => {
+    const exportReport = () => {
         if (isExporting) return;
         setIsExporting(true);
-
-        setTimeout(() => {
-            const input = document.getElementById('report-container');
-            html2canvas(input, { scale: 2 }).then((canvas) => {
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const imgProps = pdf.getImageProperties(imgData);
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save("bao-cao-he-thong.pdf");
-            }).catch(err => {
-                console.error("Lỗi:", err);
-                alert("Có lỗi xảy ra khi xuất PDF!");
-            }).finally(() => {
-                setIsExporting(false);
-            });
-        }, 50);
+        try {
+            window.print();
+        } finally {
+            setIsExporting(false);
+        }
     };
 
     // Lịch báo cáo
@@ -179,7 +162,7 @@ export default function AdminOverviewTab() {
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
                     <button
-                        onClick={exportPDF}
+                        onClick={exportReport}
                         onMouseEnter={() => setIsHovered(true)}
                         onMouseLeave={() => setIsHovered(false)}
                         disabled={isExporting}
@@ -202,7 +185,7 @@ export default function AdminOverviewTab() {
                         }}
                     >
                         <Download size={18} />
-                        <span>{isExporting ? 'Đang xử lý...' : 'Xuất báo cáo'}</span>
+                        <span>{isExporting ? 'Đang xử lý...' : 'In báo cáo'}</span>
                     </button>
                 </div>
             </div>

@@ -10,7 +10,6 @@ import com.project.waste.exception.ResourceNotFoundException;
 import com.project.waste.exception.InvalidStateTransitionException;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -20,8 +19,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import org.springframework.transaction.annotation.Transactional;
-import com.project.waste.enums.CollectionStatus;
 @Service
 @RequiredArgsConstructor
 public class AdminService {
@@ -350,34 +347,36 @@ public class AdminService {
     }
 
 
-    //Transaction cập nhật trạng thái yêu cầu
-    @Autowired
-    private RequestStatusHistoryRepository historyRepo;
     @Transactional
-    public void updateRequestStatus(Long id, String newStatusString, String note) {
-        // 1. Tìm yêu cầu thu gom trong Database
+    public void updateRequestStatus(Long id, String newStatusString, String note, String adminUsername) {
+        if (newStatusString == null || newStatusString.isBlank()) {
+            throw new IllegalArgumentException("Trạng thái mới không được trống");
+        }
+        if (adminUsername == null || adminUsername.isBlank()) {
+            throw new IllegalArgumentException("Admin không hợp lệ");
+        }
+
         CollectionRequest request = requestRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy yêu cầu số " + id));
 
-        // Lưu lại trạng thái cũ để ghi lịch sử
+        User admin = userRepo.findByUsername(adminUsername)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy admin: " + adminUsername));
+
         CollectionStatus oldStatus = request.getStatus();
         CollectionStatus newStatus = CollectionStatus.valueOf(newStatusString);
 
-        // 2. Chuyển đổi sang trạng thái mới
         request.transitionTo(newStatus);
         requestRepo.save(request);
 
-        // 3. GHI LỊCH SỬ
         RequestStatusHistory history = RequestStatusHistory.builder()
                 .request(request)
                 .fromStatus(oldStatus)
                 .toStatus(newStatus)
+                .changedBy(admin)
                 .note(note)
                 .build();
 
-        // Lưu dòng lịch sử này vào Database
-        historyRepo.save(history);
-
+        requestStatusHistoryRepo.save(Objects.requireNonNull(history));
     }
 
 

@@ -5,8 +5,6 @@ import {
 } from 'recharts';
 import { Download, TrendingUp, Package, Users, Building2 } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 const COLORS = ['#22c55e', '#3b82f6', '#eab308', '#ef4444', '#a855f7'];
 
@@ -44,29 +42,14 @@ export default function AdminStatsTab() {
 
     const trendData = Array.isArray(stats.last7DaysTrend) ? stats.last7DaysTrend : [];
 
-    // Nút xuất báo cáo
-    const exportPDF = () => {
+    const exportReport = () => {
         if (isExporting) return;
         setIsExporting(true);
-
-        setTimeout(() => {
-            const input = document.getElementById('report-container');
-            html2canvas(input, { scale: 2 }).then((canvas) => {
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const imgProps = pdf.getImageProperties(imgData);
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save("thong-ke-he-thong.pdf");
-            }).catch(err => {
-                console.error("Lỗi:", err);
-                alert("Có lỗi xảy ra khi xuất PDF!");
-            }).finally(() => {
-                setIsExporting(false);
-            });
-        }, 50);
+        try {
+            window.print();
+        } finally {
+            setIsExporting(false);
+        }
     };
 
     return (
@@ -78,7 +61,7 @@ export default function AdminStatsTab() {
                     <p style={{ margin: '4px 0 0', color: '#666', fontSize: '14px' }}>Dữ liệu chi tiết về hệ thống EcoCollect</p>
                 </div>
                 <button
-                    onClick={exportPDF}
+                    onClick={exportReport}
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                     disabled={isExporting}
@@ -100,7 +83,7 @@ export default function AdminStatsTab() {
                     }}
                 >
                     <Download size={18} />
-                    <span>{isExporting ? 'Đang xử lý...' : 'Tải báo cáo PDF'}</span>
+                    <span>{isExporting ? 'Đang xử lý...' : 'In báo cáo'}</span>
                 </button>
             </div>
 

@@ -97,12 +97,13 @@ public class AdminController {
     @PutMapping("/requests/{id}/status")
     public ResponseEntity<?> updateRequestStatus(
             @PathVariable Long id,
-            @RequestBody Map<String, String> requestBody) {
+            @RequestBody Map<String, String> requestBody,
+            @AuthenticationPrincipal UserDetails ud) {
 
         String newStatus = requestBody.get("status");
         String note = requestBody.get("note");
 
-        adminService.updateRequestStatus(id, newStatus, note);
+        adminService.updateRequestStatus(id, newStatus, note, ud.getUsername());
 
         return ResponseEntity.ok("Cập nhật trạng thái thành công");
     }
