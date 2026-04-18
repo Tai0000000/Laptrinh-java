@@ -68,6 +68,12 @@ public class AuthService {
                     .body(new MessageResponse("Error: Email is already in use!"));
         }
 
+        if (signUpRequest.getRole() != null && "admin".equalsIgnoreCase(signUpRequest.getRole())) {
+            return ResponseEntity
+                    .status(403)
+                    .body(new MessageResponse("Không cho phép đăng ký tài khoản quản trị viên"));
+        }
+
         
         User user = User.builder()
                 .username(signUpRequest.getUsername())
@@ -87,9 +93,6 @@ public class AuthService {
             role = UserRole.CITIZEN;
         } else {
             switch (strRole.toLowerCase()) {
-                case "admin":
-                    role = UserRole.ADMIN;
-                    break;
                 case "enterprise":
                     role = UserRole.ENTERPRISE;
                     break;
