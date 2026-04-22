@@ -75,7 +75,8 @@ export default function AdminMapTab() {
         setLoadError(null);
         axiosClient.get('/admin/requests', { params: { page: 0, size: 500 } })
             .then(res => {
-                const rows = res.data.content || [];
+                const data = res.data.data || res.data;
+                const rows = data.content || [];
                 setRequests(Array.isArray(rows) ? rows : []);
             })
             .catch((e) => {
@@ -427,12 +428,21 @@ export default function AdminMapTab() {
 
                         {selectedRequest ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                <div style={{ background: '#1a1a1a', borderRadius: '16px', overflow: 'hidden' }}>
-                                    <img 
-                                        src={selectedRequest.photoUrl || 'https://placehold.co/400x300/1a1a1a/22c55e?text=No+Photo'} 
-                                        style={{ width: '100%', height: '160px', objectFit: 'cover' }}
-                                        alt="Rác"
-                                    />
+                                <div style={{ background: '#1a1a1a', borderRadius: '16px', overflow: 'hidden', position: 'relative' }}>
+                                    {selectedRequest.photoUrl ? (
+                                        <img 
+                                            src={selectedRequest.photoUrl.startsWith('http')
+                                                ? selectedRequest.photoUrl
+                                                : `http://localhost:8081${selectedRequest.photoUrl}`}
+                                            style={{ width: '100%', height: '160px', objectFit: 'cover', cursor: 'zoom-in' }}
+                                            alt="Rác"
+                                            onClick={() => window.open(selectedRequest.photoUrl.startsWith('http') ? selectedRequest.photoUrl : `http://localhost:8081${selectedRequest.photoUrl}`, '_blank')}
+                                        />
+                                    ) : (
+                                        <div style={{ width: '100%', height: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#222', color: '#666', fontSize: '13px' }}>
+                                            Không có ảnh
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

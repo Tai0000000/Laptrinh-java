@@ -20,7 +20,8 @@ export default function AdminRequestTab() {
                 const response = await axiosClient.get('/admin/requests');
 
                 if (!cancelled) {
-                    const dataList = response.data.content || response.data.data || response.data || [];
+                    const data = response.data.data || response.data;
+                    const dataList = data.content || data;
                     setRequests(Array.isArray(dataList) ? dataList : []);
                 }
             } catch (err) {
@@ -87,7 +88,7 @@ export default function AdminRequestTab() {
                 note: 'Admin đã hủy yêu cầu này'
             });
 
-            // Cập nhật lại danh sách ở local để giao diện đổi màu ngay lập tức
+            
             setRequests(prev => prev.map(req =>
                 req.id === id ? { ...req, status: 'CANCELLED' } : req
             ));
@@ -154,7 +155,7 @@ export default function AdminRequestTab() {
                                     }}
                                 >
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'center' }}>
-                                        {/* ĐÃ THÊM DẤU ? ĐỂ CHỐNG LỖI TRẮNG TRANG */}
+                                        {/* CHỐNG LỖI TRẮNG TRANG */}
                                         <span style={{ fontWeight: '700', fontSize: '15px', color: isSelected ? '#22c55e' : '#fff' }}>
                                             {item.citizen?.fullName|| 'Người ẩn danh'}
                                         </span>
@@ -225,18 +226,44 @@ export default function AdminRequestTab() {
                                 <h4 style={{ margin: '0 0 16px', color: '#888', fontSize: '12px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                     <ImageIcon size={14} /> Ảnh đính kèm
                                 </h4>
-                                <img
-                                    src={selectedRequest.photoUrl?.startsWith('http')
-                                        ? selectedRequest.photoUrl
-                                        : `http://localhost:8081${selectedRequest.photoUrl}`} // Đổi 3000 thành 8081 (hoặc 8080 tùy backend)
-                                    alt="Rác đính kèm"
-                                    style={{ maxWidth: '300px', width: '100%', borderRadius: '12px', border: '1px solid #333' }}
-                                    onError={(e) => { e.target.style.display = 'none'; }}
-                                />
-                            </div>
-
-                            <div style={{ padding: '20px', color: '#666', fontStyle: 'italic', background: '#222', borderRadius: '12px' }}>
-                                Không có ảnh đính kèm
+                                {selectedRequest.photoUrl ? (
+                                    <div style={{ position: 'relative', width: 'fit-content' }}>
+                                        <img
+                                            src={selectedRequest.photoUrl.startsWith('http')
+                                                ? selectedRequest.photoUrl
+                                                : `http://localhost:8081${selectedRequest.photoUrl}`}
+                                            alt="Rác đính kèm"
+                                            style={{ 
+                                                maxWidth: '400px', 
+                                                width: '100%', 
+                                                borderRadius: '12px', 
+                                                border: '1px solid #333',
+                                                cursor: 'zoom-in',
+                                                display: 'block'
+                                            }}
+                                            onClick={() => window.open(selectedRequest.photoUrl.startsWith('http') ? selectedRequest.photoUrl : `http://localhost:8081${selectedRequest.photoUrl}`, '_blank')}
+                                        />
+                                        <div style={{ 
+                                            position: 'absolute', 
+                                            bottom: '12px', 
+                                            right: '12px', 
+                                            background: 'rgba(0,0,0,0.6)', 
+                                            padding: '4px 8px', 
+                                            borderRadius: '6px', 
+                                            fontSize: '11px', 
+                                            backdropFilter: 'blur(4px)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px'
+                                        }}>
+                                            <Search size={12} /> Xem ảnh lớn
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div style={{ padding: '20px', color: '#666', fontStyle: 'italic', background: '#222', borderRadius: '12px', textAlign: 'center' }}>
+                                        Không có ảnh đính kèm
+                                    </div>
+                                )}
                             </div>
 
                             <div>

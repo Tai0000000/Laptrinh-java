@@ -22,11 +22,14 @@ export default function AdminStatsTab() {
         axiosClient.get('/admin/overview')
             .then(res => {
                 if (cancelled) return;
-                setStats(res.data);
+                // Xử lý linh灵活 nếu dữ liệu bị bọc trong res.data.data
+                const data = res.data.data || res.data;
+                setStats(data);
                 setLoading(false);
             })
-            .catch(() => {
+            .catch((err) => {
                 if (cancelled) return;
+                console.error("Lỗi tải thống kê:", err);
                 setError('Không thể tải thống kê từ máy chủ');
                 setLoading(false);
             });

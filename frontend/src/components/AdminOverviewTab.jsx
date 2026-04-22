@@ -88,11 +88,15 @@ export default function AdminOverviewTab() {
         axiosClient.get('/admin/overview')
             .then(res => {
                 if (cancelled) return;
-                setStats(res.data);
+                // Xử lý linh hoạt nếu dữ liệu bị bọc trong res.data.data
+                const data = res.data.data || res.data;
+                console.log("Overview data:", data); // Log để kiểm tra structure
+                setStats(data);
                 setLoading(false);
             })
             .catch(err => {
                 if (cancelled) return;
+                console.error("Lỗi tải overview:", err);
                 setError("Không thể tải thông tin tổng quan");
                 setLoading(false);
             });
@@ -240,10 +244,11 @@ export default function AdminOverviewTab() {
                                 <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
                                 <Tooltip contentStyle={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: '12px' }} itemStyle={{ fontSize: '12px' }} />
                                 <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ paddingBottom: '20px' }} />
-                                <Bar dataKey="recyclable" name="Tái chế" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={8} />
                                 <Bar dataKey="organic" name="Hữu cơ" fill="#eab308" radius={[4, 4, 0, 0]} barSize={8} />
                                 <Bar dataKey="hazardous" name="Nguy hại" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={8} />
+                                <Bar dataKey="recyclable" name="Tái chế" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={8} />
                                 <Bar dataKey="electronic" name="Điện tử" fill="#a855f7" radius={[4, 4, 0, 0]} barSize={8} />
+                                <Bar dataKey="general" name="Thông thường" fill="#666" radius={[4, 4, 0, 0]} barSize={8} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>

@@ -220,13 +220,33 @@ export default function CitizenDashboard() {
     }
 
     try {
+      let finalPhotoUrl = newReport.photoUrl;
+
+      // Nếu có file ảnh được chọn từ máy, upload lên server trước
+      if (uploadedAiImage && uploadedAiImage.file) {
+        const formData = new FormData();
+        formData.append('file', uploadedAiImage.file);
+        
+        try {
+          const uploadRes = await axiosClient.post('/files/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+          finalPhotoUrl = uploadRes.data.url;
+        } catch (uploadErr) {
+          console.error("Lỗi upload ảnh:", uploadErr);
+          // Vẫn tiếp tục nếu upload lỗi nhưng có description? 
+          // Hoặc dừng lại báo lỗi? Thường nên dừng lại.
+          throw new Error("Không thể tải ảnh lên hệ thống. Vui lòng thử lại.");
+        }
+      }
+
       await axiosClient.post('/requests', {
         wasteType: newReport.wasteType,
         latitude,
         longitude,
         addressText: newReport.addressText,
         description: newReport.description,
-        photoUrl: newReport.photoUrl
+        photoUrl: finalPhotoUrl
       });
 
       alert("✅ Gửi yêu cầu thu gom thành công!");
@@ -298,7 +318,8 @@ export default function CitizenDashboard() {
     reader.onload = () => {
       setUploadedAiImage({
         name: file.name,
-        dataUrl: reader.result
+        dataUrl: reader.result,
+        file: file // Lưu file gốc để upload
       });
       setError('');
     };
