@@ -42,7 +42,7 @@ public class Enterprise {
 
     @Column(name = "is_verified", nullable = false)
     @Builder.Default
-    private boolean verified = true;
+    private boolean verified = false;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default

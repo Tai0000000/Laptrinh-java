@@ -232,6 +232,15 @@ public class AdminService {
         if (updates.containsKey("serviceArea")) ent.setServiceArea((String) updates.get("serviceArea"));
         if (updates.containsKey("maxCapacityKg")) ent.setMaxCapacityKg(Integer.parseInt(updates.get("maxCapacityKg").toString()));
         if (updates.containsKey("address")) ent.setAddress((String) updates.get("address"));
+        if (updates.containsKey("verified")) ent.setVerified((boolean) updates.get("verified"));
+        return enterpriseRepo.save(ent);
+    }
+
+    @Transactional
+    public Enterprise verifyEnterprise(Long id, boolean verified) {
+        Enterprise ent = enterpriseRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Enterprise not found"));
+        ent.setVerified(verified);
         return enterpriseRepo.save(ent);
     }
 

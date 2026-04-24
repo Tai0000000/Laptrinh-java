@@ -150,6 +150,10 @@ public class CollectionRequestService {
         Enterprise enterprise = enterpriseRepository.findById(enterpriseId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy enterprise id: " + enterpriseId));
 
+        if (!enterprise.isVerified()) {
+            throw new IllegalArgumentException("Tài khoản doanh nghiệp của bạn chưa được quản trị viên duyệt. Vui lòng đợi hoặc liên hệ hỗ trợ.");
+        }
+
         CollectionStatus fromStatus = request.getStatus();
         request.setEnterprise(enterprise);
         request.transitionTo(CollectionStatus.ACCEPTED);
@@ -203,6 +207,10 @@ public class CollectionRequestService {
         User user = findUserByPrincipal(username);
         Enterprise ent = enterpriseRepository.findByOwnerId(user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Enterprise not found for user"));
+
+        if (!ent.isVerified()) {
+            throw new IllegalArgumentException("Tài khoản doanh nghiệp của bạn chưa được quản trị viên duyệt. Vui lòng đợi hoặc liên hệ hỗ trợ.");
+        }
 
         User collectorUser = userRepository.findById(collectorUserId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy user collector id: " + collectorUserId));

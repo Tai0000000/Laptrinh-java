@@ -69,82 +69,35 @@ export default function EnterpriseDashboard() {
     setLoading(true);
     setError(null);
 
-    const [enterpriseResult, collectorsResult, statsResult, pendingResult, acceptedResult, complaintsResult] = await Promise.allSettled([
-      axiosClient.get('/enterprise/me'),
-      axiosClient.get('/enterprise/collectors'),
-      axiosClient.get('/enterprise/stats'),
-      axiosClient.get('/requests/pending'),
-      axiosClient.get('/requests/accepted'),
-      axiosClient.get('/enterprise/complaints')
-    ]);
+    try {
+      const enterpriseRes = await axiosClient.get('/enterprise/me');
+      const entData = enterpriseRes.data;
+      setEnterprise(entData);
 
-    if (enterpriseResult.status === 'fulfilled') {
-      setEnterprise(enterpriseResult.value.data);
-    } else {
-      setEnterprise(null);
+      if (entData && entData.verified) {
+        const [collectorsResult, statsResult, pendingResult, acceptedResult, complaintsResult] = await Promise.allSettled([
+          axiosClient.get('/enterprise/collectors'),
+          axiosClient.get('/enterprise/stats'),
+          axiosClient.get('/requests/pending'),
+          axiosClient.get('/requests/accepted'),
+          axiosClient.get('/enterprise/complaints')
+        ]);
+
+        if (collectorsResult.status === 'fulfilled') setCollectors(collectorsResult.value.data || []);
+        if (statsResult.status === 'fulfilled') setStats(statsResult.value.data);
+        if (pendingResult.status === 'fulfilled') setPendingRequests(pendingResult.value.data || []);
+        if (acceptedResult.status === 'fulfilled') setAcceptedRequests(acceptedResult.value.data || []);
+        if (complaintsResult.status === 'fulfilled') setComplaints(complaintsResult.value.data?.content || []);
+      }
+    } catch (err) {
+      if (err.response?.status === 404 && err.config?.url?.includes('/enterprise/me')) {
+        setEnterprise(null);
+      } else {
+        setError(err?.response?.data?.message || 'Không tải được dữ liệu doanh nghiệp');
+      }
+    } finally {
+      setLoading(false);
     }
-
-    if (collectorsResult.status === 'fulfilled') {
-      setCollectors(collectorsResult.value.data || []);
-    } else {
-      setCollectors([]);
-    }
-
-    if (statsResult.status === 'fulfilled') {
-      setStats(statsResult.value.data);
-    } else {
-      setStats(null);
-    }
-
-    if (pendingResult.status === 'fulfilled') {
-      setPendingRequests(pendingResult.value.data || []);
-    } else {
-      setPendingRequests([]);
-    }
-
-    if (acceptedResult.status === 'fulfilled') {
-      setAcceptedRequests(acceptedResult.value.data || []);
-    } else {
-      setAcceptedRequests([]);
-    }
-
-    if (complaintsResult.status === 'fulfilled') {
-      setComplaints(complaintsResult.value.data?.content || []);
-    } else {
-      setComplaints([]);
-    }
-
-    const firstRejected = [
-      enterpriseResult,
-      collectorsResult,
-      statsResult,
-      pendingResult,
-      acceptedResult
-    ].find((result) => {
-        if (result.status === 'rejected') {
-            const status = result.reason?.response?.status;
-            const url = result.reason?.config?.url;
-            
-            
-            
-            const isNoEnterprise = enterpriseResult.status === 'rejected' && enterpriseResult.reason?.response?.status === 404;
-            
-            if (isNoEnterprise && status === 404) {
-                return false; 
-            }
-            
-            
-            const isMe404 = status === 404 && url?.includes('/enterprise/me');
-            return !isMe404;
-        }
-        return false;
-    });
-
-    if (firstRejected) {
-      setError(firstRejected.reason?.response?.data?.message || 'Không tải được toàn bộ dữ liệu doanh nghiệp');
-    }
-
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -253,170 +206,221 @@ export default function EnterpriseDashboard() {
           </div>
         </div>
 
-        {error && (
-          <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.35)', color: '#fca5a5', padding: '14px 16px', borderRadius: '12px' }}>
-            {error}
+        {enterprise && !enterprise.verified ? (
+          <div style={{
+            background: 'rgba(234, 179, 8, 0.05)',
+            border: '1px solid rgba(234, 179, 8, 0.1)',
+            borderRadius: '24px',
+            padding: '48px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+            gap: '24px',
+            marginTop: '40px'
+          }}>
+            <div style={{
+              background: '#eab308',
+              color: '#000',
+              width: '80px',
+              height: '80px',
+              borderRadius: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 20px 40px -10px rgba(234, 179, 8, 0.3)'
+            }}>
+              <AlertTriangle size={40} />
+            </div>
+            <div style={{ maxWidth: '500px' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#fff', marginBottom: '12px' }}>
+                Tài khoản đang chờ phê duyệt
+              </h2>
+              <p style={{ fontSize: '16px', color: '#888', lineHeight: '1.6' }}>
+                Cảm ơn bạn đã đăng ký tham gia hệ thống EcoWaste. Hồ sơ doanh nghiệp của bạn hiện đang được quản trị viên xem xét.
+                Quy trình này thường mất từ 1-2 ngày làm việc.
+              </p>
+              <div style={{ 
+                marginTop: '32px', 
+                padding: '16px', 
+                background: 'rgba(255,255,255,0.03)', 
+                borderRadius: '12px',
+                fontSize: '14px',
+                color: '#666'
+              }}>
+                Sau khi được duyệt, bạn sẽ có quyền truy cập đầy đủ các tính năng: Nhận yêu cầu thu gom, quản lý nhân viên và xem báo cáo thống kê.
+              </div>
+            </div>
           </div>
-        )}
+        ) : (
+          <>
+            {error && (
+              <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.35)', color: '#fca5a5', padding: '14px 16px', borderRadius: '12px' }}>
+                {error}
+              </div>
+            )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-          <div style={cardStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <span style={{ color: '#888' }}>Yêu cầu chờ nhận</span>
-              <FileText size={18} color="#22c55e" />
-            </div>
-            <div style={{ fontSize: '30px', fontWeight: '700' }}>{pendingRequests.length}</div>
-          </div>
-          <div style={cardStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <span style={{ color: '#888' }}>Yêu cầu đã nhận</span>
-              <CheckCircle2 size={18} color="#22c55e" />
-            </div>
-            <div style={{ fontSize: '30px', fontWeight: '700' }}>{acceptedRequests.length}</div>
-          </div>
-          <div style={cardStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <span style={{ color: '#888' }}>Nhân viên thu gom</span>
-              <Users size={18} color="#22c55e" />
-            </div>
-            <div style={{ fontSize: '30px', fontWeight: '700' }}>{collectors.length}</div>
-          </div>
-          <div style={cardStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <span style={{ color: '#888' }}>Đơn đã thu gom</span>
-              <Building2 size={18} color="#22c55e" />
-            </div>
-            <div style={{ fontSize: '30px', fontWeight: '700' }}>{statusCount.COLLECTED || 0}</div>
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', alignItems: 'start' }}>
-          <div style={{ ...sectionStyle, minHeight: '360px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ margin: 0, fontSize: '20px' }}>Yêu cầu đang chờ</h2>
-              {loading && <span style={{ color: '#888', fontSize: '14px' }}>Đang tải...</span>}
-            </div>
-            <div style={{ display: 'grid', gap: '12px' }}>
-              {pendingRequests.length === 0 && (
-                <div style={{ color: '#666' }}>Hiện chưa có yêu cầu nào cần tiếp nhận.</div>
-              )}
-              {pendingRequests.map((request) => (
-                <div key={request.id} style={{ border: '1px solid #1f1f1f', borderRadius: '14px', padding: '16px', display: 'grid', gap: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: '600' }}>Yêu cầu #{request.id}</div>
-                      <div style={{ color: '#888', fontSize: '13px', marginTop: '4px' }}>{request.addressText || 'Chưa có địa chỉ'}</div>
-                    </div>
-                    <span style={{ color: '#22c55e', fontSize: '13px' }}>{request.wasteType}</span>
-                  </div>
-                  <div style={{ color: '#bbb', fontSize: '14px' }}>{request.description || 'Không có mô tả thêm'}</div>
-                  <button
-                    type="button"
-                    onClick={() => handleAcceptRequest(request.id)}
-                    style={{ width: 'fit-content', background: '#22c55e', color: '#000', border: 'none', borderRadius: '10px', padding: '10px 14px', fontWeight: '600', cursor: 'pointer' }}
-                  >
-                    Nhận yêu cầu
-                  </button>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+              <div style={cardStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ color: '#888' }}>Yêu cầu chờ nhận</span>
+                  <FileText size={18} color="#22c55e" />
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gap: '24px' }}>
-            <div style={sectionStyle}>
-              <h2 style={{ margin: '0 0 20px', fontSize: '20px' }}>Nhân viên thu gom</h2>
-              <div style={{ display: 'grid', gap: '10px' }}>
-                {collectors.length === 0 && (
-                  <div style={{ color: '#666' }}>Doanh nghiệp chưa có nhân viên thu gom nào.</div>
-                )}
-                {collectors.map((collector) => (
-                  <div key={collector.id} style={{ border: '1px solid #1f1f1f', borderRadius: '12px', padding: '14px 16px' }}>
-                    <div style={{ fontWeight: '600' }}>{collector.fullName || collector.username}</div>
-                    <div style={{ color: '#888', fontSize: '13px', marginTop: '4px' }}>{collector.email || 'Chưa có email'}</div>
-                  </div>
-                ))}
+                <div style={{ fontSize: '30px', fontWeight: '700' }}>{pendingRequests.length}</div>
+              </div>
+              <div style={cardStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ color: '#888' }}>Yêu cầu đã nhận</span>
+                  <CheckCircle2 size={18} color="#22c55e" />
+                </div>
+                <div style={{ fontSize: '30px', fontWeight: '700' }}>{acceptedRequests.length}</div>
+              </div>
+              <div style={cardStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ color: '#888' }}>Nhân viên thu gom</span>
+                  <Users size={18} color="#22c55e" />
+                </div>
+                <div style={{ fontSize: '30px', fontWeight: '700' }}>{collectors.length}</div>
+              </div>
+              <div style={cardStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ color: '#888' }}>Đơn đã thu gom</span>
+                  <Building2 size={18} color="#22c55e" />
+                </div>
+                <div style={{ fontSize: '30px', fontWeight: '700' }}>{statusCount.COLLECTED || 0}</div>
               </div>
             </div>
 
-            <div style={sectionStyle}>
-              <h2 style={{ margin: '0 0 20px', fontSize: '20px' }}>Yêu cầu đã nhận</h2>
-              <div style={{ display: 'grid', gap: '10px' }}>
-                {acceptedRequests.length === 0 && (
-                  <div style={{ color: '#666' }}>Chưa có yêu cầu nào đã được doanh nghiệp tiếp nhận.</div>
-                )}
-                {acceptedRequests.slice(0, 5).map((request) => (
-                  <div key={request.id} style={{ border: '1px solid #1f1f1f', borderRadius: '12px', padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <div style={{ fontWeight: '600' }}>#{request.id} · {request.wasteType}</div>
-                        <span style={{ fontSize: '12px', color: '#22c55e' }}>Đã tiếp nhận</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', alignItems: 'start' }}>
+              <div style={{ ...sectionStyle, minHeight: '360px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ margin: 0, fontSize: '20px' }}>Yêu cầu đang chờ</h2>
+                  {loading && <span style={{ color: '#888', fontSize: '14px' }}>Đang tải...</span>}
+                </div>
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  {pendingRequests.length === 0 && (
+                    <div style={{ color: '#666' }}>Hiện chưa có yêu cầu nào cần tiếp nhận.</div>
+                  )}
+                  {pendingRequests.map((request) => (
+                    <div key={request.id} style={{ border: '1px solid #1f1f1f', borderRadius: '14px', padding: '16px', display: 'grid', gap: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontWeight: '600' }}>Yêu cầu #{request.id}</div>
+                          <div style={{ color: '#888', fontSize: '13px', marginTop: '4px' }}>{request.addressText || 'Chưa có địa chỉ'}</div>
+                        </div>
+                        <span style={{ color: '#22c55e', fontSize: '13px' }}>{request.wasteType}</span>
+                      </div>
+                      <div style={{ color: '#bbb', fontSize: '14px' }}>{request.description || 'Không có mô tả thêm'}</div>
+                      <button
+                        type="button"
+                        onClick={() => handleAcceptRequest(request.id)}
+                        style={{ width: 'fit-content', background: '#22c55e', color: '#000', border: 'none', borderRadius: '10px', padding: '10px 14px', fontWeight: '600', cursor: 'pointer' }}
+                      >
+                        Nhận yêu cầu
+                      </button>
                     </div>
-                    <div style={{ color: '#888', fontSize: '13px', marginBottom: '12px' }}>{request.addressText || 'Chưa có địa chỉ'}</div>
-                    
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <select 
-                            onChange={(e) => handleAssignCollector(request.id, e.target.value)}
-                            defaultValue=""
-                            style={{ 
-                                flex: 1,
-                                background: '#1a1a1a', 
-                                color: '#fff', 
-                                border: '1px solid #333', 
-                                borderRadius: '8px', 
-                                padding: '8px',
-                                fontSize: '13px'
-                            }}
-                        >
-                            <option value="" disabled>Chọn nhân viên phân công...</option>
-                            {collectors.map(c => (
-                                <option key={c.id} value={c.id}>{c.fullName || c.username}</option>
-                            ))}
-                        </select>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div style={sectionStyle}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0, fontSize: '20px' }}>Khiếu nại khách hàng</h2>
-                <AlertTriangle size={20} color="#f59e0b" />
-              </div>
-              <div style={{ display: 'grid', gap: '12px' }}>
-                {complaints.length === 0 && (
-                  <div style={{ color: '#666' }}>Chưa có khiếu nại nào từ khách hàng.</div>
-                )}
-                {complaints.map((complaint) => (
-                  <div key={complaint.id} style={{ background: '#0a0a0a', border: '1px solid #1f1f1f', borderRadius: '14px', padding: '16px', display: 'grid', gap: '8px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div>
-                        <div style={{ fontWeight: '600', fontSize: '15px' }}>{complaint.title}</div>
-                        <div style={{ color: '#888', fontSize: '12px' }}>
-                          Yêu cầu #{complaint.requestId} • {complaint.citizenFullName || 'Không rõ người gửi'}
+              <div style={{ display: 'grid', gap: '24px' }}>
+                <div style={sectionStyle}>
+                  <h2 style={{ margin: '0 0 20px', fontSize: '20px' }}>Nhân viên thu gom</h2>
+                  <div style={{ display: 'grid', gap: '10px' }}>
+                    {collectors.length === 0 && (
+                      <div style={{ color: '#666' }}>Doanh nghiệp chưa có nhân viên thu gom nào.</div>
+                    )}
+                    {collectors.map((collector) => (
+                      <div key={collector.id} style={{ border: '1px solid #1f1f1f', borderRadius: '12px', padding: '14px 16px' }}>
+                        <div style={{ fontWeight: '600' }}>{collector.fullName || collector.username}</div>
+                        <div style={{ color: '#888', fontSize: '13px', marginTop: '4px' }}>{collector.email || 'Chưa có email'}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={sectionStyle}>
+                  <h2 style={{ margin: '0 0 20px', fontSize: '20px' }}>Yêu cầu đã nhận</h2>
+                  <div style={{ display: 'grid', gap: '10px' }}>
+                    {acceptedRequests.length === 0 && (
+                      <div style={{ color: '#666' }}>Chưa có yêu cầu nào đã được doanh nghiệp tiếp nhận.</div>
+                    )}
+                    {acceptedRequests.slice(0, 5).map((request) => (
+                      <div key={request.id} style={{ border: '1px solid #1f1f1f', borderRadius: '12px', padding: '14px 16px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <div style={{ fontWeight: '600' }}>#{request.id} · {request.wasteType}</div>
+                            <span style={{ fontSize: '12px', color: '#22c55e' }}>Đã tiếp nhận</span>
+                        </div>
+                        <div style={{ color: '#888', fontSize: '13px', marginBottom: '12px' }}>{request.addressText || 'Chưa có địa chỉ'}</div>
+                        
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <select 
+                                onChange={(e) => handleAssignCollector(request.id, e.target.value)}
+                                defaultValue=""
+                                style={{ 
+                                    flex: 1,
+                                    background: '#1a1a1a', 
+                                    color: '#fff', 
+                                    border: '1px solid #333', 
+                                    borderRadius: '8px', 
+                                    padding: '8px',
+                                    fontSize: '13px'
+                                }}
+                            >
+                                <option value="" disabled>Chọn nhân viên phân công...</option>
+                                {collectors.map(c => (
+                                    <option key={c.id} value={c.id}>{c.fullName || c.username}</option>
+                                ))}
+                            </select>
                         </div>
                       </div>
-                      <span style={getBadgeStyle(complaint.status)}>{formatComplaintStatus(complaint.status)}</span>
-                    </div>
-                    <div style={{ fontSize: '14px', color: '#ccc', lineHeight: '1.5' }}>{complaint.content}</div>
-                    {complaint.status === 'OPEN' ? (
-                      <button
-                        onClick={() => handleResolveComplaint(complaint.id)}
-                        style={{ background: '#22c55e20', color: '#22c55e', border: '1px solid #22c55e40', borderRadius: '8px', padding: '8px 12px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', width: 'fit-content', marginTop: '4px' }}
-                      >
-                        <MessageSquare size={14} />
-                        Phản hồi ngay
-                      </button>
-                    ) : (
-                      <div style={{ background: '#101a11', border: '1px solid #1d3521', borderRadius: '10px', padding: '10px 12px', fontSize: '13px', color: '#9ae6b4', marginTop: '4px' }}>
-                        <b>Phản hồi:</b> {complaint.resolution}
-                      </div>
-                    )}
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                <div style={sectionStyle}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h2 style={{ margin: 0, fontSize: '20px' }}>Khiếu nại khách hàng</h2>
+                    <AlertTriangle size={20} color="#f59e0b" />
+                  </div>
+                  <div style={{ display: 'grid', gap: '12px' }}>
+                    {complaints.length === 0 && (
+                      <div style={{ color: '#666' }}>Chưa có khiếu nại nào từ khách hàng.</div>
+                    )}
+                    {complaints.map((complaint) => (
+                      <div key={complaint.id} style={{ background: '#0a0a0a', border: '1px solid #1f1f1f', borderRadius: '14px', padding: '16px', display: 'grid', gap: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div>
+                            <div style={{ fontWeight: '600', fontSize: '15px' }}>{complaint.title}</div>
+                            <div style={{ color: '#888', fontSize: '12px' }}>
+                              Yêu cầu #{complaint.requestId} • {complaint.citizenFullName || 'Không rõ người gửi'}
+                            </div>
+                          </div>
+                          <span style={getBadgeStyle(complaint.status)}>{formatComplaintStatus(complaint.status)}</span>
+                        </div>
+                        <div style={{ fontSize: '14px', color: '#ccc', lineHeight: '1.5' }}>{complaint.content}</div>
+                        {complaint.status === 'OPEN' ? (
+                          <button
+                            type="button"
+                            onClick={() => handleResolveComplaint(complaint.id)}
+                            style={{ background: '#22c55e20', color: '#22c55e', border: '1px solid #22c55e40', borderRadius: '8px', padding: '8px 12px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', width: 'fit-content', marginTop: '4px' }}
+                          >
+                            <MessageSquare size={14} />
+                            Phản hồi ngay
+                          </button>
+                        ) : (
+                          <div style={{ background: '#101a11', border: '1px solid #1d3521', borderRadius: '10px', padding: '10px 12px', fontSize: '13px', color: '#9ae6b4', marginTop: '4px' }}>
+                            <b>Phản hồi:</b> {complaint.resolution}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );

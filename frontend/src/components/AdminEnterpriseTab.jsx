@@ -50,6 +50,19 @@ export default function AdminEnterpriseTab() {
         }
     };
 
+    const handleVerify = (enterpriseId) => {
+        if (window.confirm("Bạn có chắc chắn muốn duyệt doanh nghiệp này không?")) {
+            axiosClient.patch(`/admin/enterprises/${enterpriseId}/verify`, { verified: true })
+                .then(() => {
+                    alert("Đã duyệt doanh nghiệp thành công!");
+                    fetchEnterprises();
+                })
+                .catch((e) => {
+                    alert(e?.response?.data?.message || "Lỗi khi duyệt doanh nghiệp");
+                });
+        }
+    };
+
     return (
         <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px', color: '#fff' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -77,6 +90,8 @@ export default function AdminEnterpriseTab() {
                         <th style={{ padding: '20px 24px' }}>Doanh nghiệp</th>
                         <th style={{ padding: '20px 24px' }}>Dịch vụ</th>
                         <th style={{ padding: '20px 24px' }}>Địa chỉ</th>
+                        <th style={{ padding: '20px 24px' }}>Trạng thái</th>
+                        <th style={{ padding: '20px 24px', textAlign: 'right' }}>Thao tác</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -101,6 +116,39 @@ export default function AdminEnterpriseTab() {
                             </td>
                             <td style={{ padding: '16px 24px', fontSize: '13px', color: '#888' }}>
                                 {e.address || 'Chưa cập nhật'}
+                            </td>
+                            <td style={{ padding: '16px 24px' }}>
+                                {e.verified ? (
+                                    <span style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '600' }}>
+                                        Đã duyệt
+                                    </span>
+                                ) : (
+                                    <span style={{ background: 'rgba(234, 179, 8, 0.1)', color: '#eab308', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '600' }}>
+                                        Chờ duyệt
+                                    </span>
+                                )}
+                            </td>
+                            <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                                {!e.verified && (
+                                    <button
+                                        onClick={() => handleVerify(e.id)}
+                                        style={{
+                                            background: '#22c55e',
+                                            color: '#fff',
+                                            border: 'none',
+                                            padding: '6px 16px',
+                                            borderRadius: '8px',
+                                            fontSize: '13px',
+                                            fontWeight: '600',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onMouseOver={(e) => e.target.style.opacity = '0.9'}
+                                        onMouseOut={(e) => e.target.style.opacity = '1'}
+                                    >
+                                        Duyệt
+                                    </button>
+                                )}
                             </td>
                         </tr>
                     ))}

@@ -47,7 +47,7 @@ public class EnterpriseService {
                             .acceptedWasteTypes("ORGANIC,RECYCLABLE,HAZARDOUS,GENERAL,ELECTRONIC")
                             .serviceArea(owner.getCity())
                             .address(owner.getCity() != null ? owner.getCity() : "TP.HCM")
-                            .verified(true)
+                            .verified(false)
                             .build());
                 });
     }
@@ -62,6 +62,9 @@ public class EnterpriseService {
     @Transactional
     public EnterpriseComplaintDto resolveComplaint(String ownerEmail, Long complaintId, String resolution) {
         Enterprise enterprise = getMyEnterprise(ownerEmail);
+        if (!enterprise.isVerified()) {
+            throw new UnauthorizedActionException("Tài khoản doanh nghiệp chưa được duyệt");
+        }
         Complaint complaint = complaintRepo.findById(complaintId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khiếu nại"));
 
@@ -92,13 +95,16 @@ public class EnterpriseService {
                 .serviceArea(serviceArea)
                 .maxCapacityKg(maxCapacityKg)
                 .address(address)
-                .verified(true) 
+                .verified(false) 
                 .build()));
     }
 
     @Transactional
     public void addCollector(String ownerEmail, @NonNull Long collectorId) {
         Enterprise enterprise = getMyEnterprise(ownerEmail);
+        if (!enterprise.isVerified()) {
+            throw new UnauthorizedActionException("Tài khoản doanh nghiệp chưa được duyệt");
+        }
         User collectorUser = userRepo.findById(collectorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Collector không tồn tại"));
 
@@ -123,6 +129,9 @@ public class EnterpriseService {
     @Transactional
     public void removeCollector(String ownerEmail, @NonNull Long collectorId) {
         Enterprise enterprise = getMyEnterprise(ownerEmail);
+        if (!enterprise.isVerified()) {
+            throw new UnauthorizedActionException("Tài khoản doanh nghiệp chưa được duyệt");
+        }
         EnterpriseCollector.EnterpriseCollectorId id =
                 new EnterpriseCollector.EnterpriseCollectorId(enterprise.getId(), collectorId);
         if (!ecRepo.existsById(id)) {
@@ -146,6 +155,9 @@ public class EnterpriseService {
     public PointRule upsertPointRule(String ownerEmail, WasteType wasteType,
                                       int basePoints, int bonusPoints, String bonusCondition) {
         Enterprise enterprise = getMyEnterprise(ownerEmail);
+        if (!enterprise.isVerified()) {
+            throw new UnauthorizedActionException("Tài khoản doanh nghiệp chưa được duyệt");
+        }
 
         pointRuleRepo.findByEnterpriseIdAndWasteTypeAndActiveTrue(enterprise.getId(), wasteType)
                 .ifPresent(old -> { old.setActive(false); pointRuleRepo.save(old); });

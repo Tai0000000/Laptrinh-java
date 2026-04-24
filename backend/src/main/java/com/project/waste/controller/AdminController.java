@@ -78,6 +78,14 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getAllEnterprises(search, page, size));
     }
 
+    @PatchMapping("/enterprises/{id}/verify")
+    public ResponseEntity<Enterprise> verifyEnterprise(
+            @PathVariable Long id,
+            @RequestBody Map<String, Boolean> body) {
+        boolean verified = Boolean.TRUE.equals(body.get("verified"));
+        return ResponseEntity.ok(adminService.verifyEnterprise(id, verified));
+    }
+
     @GetMapping("/complaints")
     public ResponseEntity<?> getComplaints(@RequestParam(defaultValue = "0") int page) {
         return ResponseEntity.ok(adminService.getAllComplaints(page));

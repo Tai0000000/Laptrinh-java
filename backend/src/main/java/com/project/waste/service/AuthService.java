@@ -115,7 +115,7 @@ public class AuthService {
                      .companyName(savedUser.getFullName() + " Enterprise")
                      .acceptedWasteTypes("ORGANIC,RECYCLABLE,HAZARDOUS,GENERAL,ELECTRONIC")
                      .address(savedUser.getCity() != null ? savedUser.getCity() : "TP.HCM")
-                     .verified(true)
+                     .verified(false)
                      .build();
              enterpriseRepository.save(ent);
          }
