@@ -4,6 +4,9 @@ import com.project.waste.dto.AIClassificationResponse;
 import com.project.waste.enums.WasteType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.web.client.RestTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,16 +24,16 @@ public class AIService {
     private static final Logger logger = LoggerFactory.getLogger(AIService.class);
     private static final Pattern DATA_URL_PATTERN = Pattern.compile("^data:(.+?);base64,(.+)$");
 
-    @Value("${gemini.api.key}")
+    @Value("${openai.api.key}")
     private String apiKey;
 
-    private final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=";
+    private final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
     private final RestTemplate restTemplate = new RestTemplate();
 
     public AIClassificationResponse classifyWaste(String description, String imageData) {
-        if (apiKey == null || apiKey.isEmpty() || apiKey.equals("YOUR_GEMINI_API_KEY")) {
-            return new AIClassificationResponse(WasteType.GENERAL, "0.0", "Lỗi: Chưa cấu hình Gemini API Key trong application.properties");
+        if (apiKey == null || apiKey.isEmpty() || apiKey.equals("YOUR_OPENAI_API_KEY")) {
+            return new AIClassificationResponse(WasteType.GENERAL, "0.0", "Lỗi: Chưa cấu hình OpenAI API Key trong application.properties");
         }
 
         String normalizedDescription = description != null && !description.isBlank()
@@ -38,79 +41,115 @@ public class AIService {
                 : "Không có mô tả, hãy ưu tiên nhận diện từ hình ảnh.";
 
         try {
+            logger.info("Calling OpenAI API for waste classification. Description: {}", normalizedDescription);
+            
             String prompt = "Phân loại loại rác sau đây vào một trong các danh mục: ORGANIC, RECYCLABLE, HAZARDOUS, GENERAL, ELECTRONIC. " +
-                    "Trả về kết quả theo định dạng: CATEGORY|CONFIDENCE|EXPLANATION. " +
+                    "Trả về kết quả theo định dạng duy nhất: CATEGORY|CONFIDENCE|EXPLANATION. " +
                     "Trong đó: CATEGORY là tên danh mục viết hoa, CONFIDENCE là độ tin cậy (0-1), EXPLANATION là giải thích ngắn gọn bằng tiếng Việt. " +
-                    "Ví dụ: ORGANIC|0.95|Đây là vỏ chuối, có thể phân hủy tự nhiên. " +
                     "Mô tả: " + normalizedDescription;
 
+            // Xây dựng body cho OpenAI API (GPT-4o)
             Map<String, Object> requestBody = new HashMap<>();
-            List<Map<String, Object>> contents = new ArrayList<>();
-            Map<String, Object> content = new HashMap<>();
-            List<Map<String, Object>> parts = new ArrayList<>();
-
+            requestBody.put("model", "gpt-4o");
+            
+            List<Map<String, Object>> messages = new ArrayList<>();
+            Map<String, Object> userMessage = new HashMap<>();
+            userMessage.put("role", "user");
+            
+            List<Map<String, Object>> contentList = new ArrayList<>();
+            
+            // Phần văn bản
             Map<String, Object> textPart = new HashMap<>();
+            textPart.put("type", "text");
             textPart.put("text", prompt);
-            parts.add(textPart);
-
+            contentList.add(textPart);
+            
+            // Phần hình ảnh (nếu có)
             if (imageData != null && !imageData.isBlank()) {
-                Matcher matcher = DATA_URL_PATTERN.matcher(imageData.trim());
-                if (matcher.matches()) {
-                    Map<String, Object> imagePart = new HashMap<>();
-                    Map<String, Object> inlineData = new HashMap<>();
-                    inlineData.put("mime_type", matcher.group(1));
-                    inlineData.put("data", matcher.group(2));
-                    imagePart.put("inline_data", inlineData);
-                    parts.add(imagePart);
-                } else {
-                    textPart.put("text", prompt + ". Tham chiếu hình ảnh: " + imageData.trim());
-                }
+                Map<String, Object> imagePart = new HashMap<>();
+                imagePart.put("type", "image_url");
+                
+                Map<String, String> imageUrl = new HashMap<>();
+                imageUrl.put("url", imageData.trim()); // OpenAI chấp nhận trực tiếp data URL
+                imagePart.put("image_url", imageUrl);
+                
+                contentList.add(imagePart);
+            }
+            
+            userMessage.put("content", contentList);
+            messages.add(userMessage);
+            requestBody.put("messages", messages);
+            requestBody.put("temperature", 0.3);
+
+            // Cấu hình Header
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(apiKey);
+            
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            logger.info("Sending request to OpenAI API...");
+            
+            Map<String, Object> response;
+            try {
+                response = restTemplate.postForObject(OPENAI_API_URL, entity, Map.class);
+            } catch (Exception e) {
+                logger.error("Network or API error when calling OpenAI: {}", e.getMessage());
+                return new AIClassificationResponse(WasteType.GENERAL, "0.0", "Lỗi kết nối OpenAI: " + e.getMessage());
             }
 
-            content.put("parts", parts);
-            contents.add(content);
-            requestBody.put("contents", contents);
-
-            String url = GEMINI_API_URL + apiKey;
-            @SuppressWarnings("unchecked")
-            Map<String, Object> response = restTemplate.postForObject(url, requestBody, Map.class);
-
-            if (response != null && response.containsKey("candidates")) {
+            if (response != null && response.containsKey("choices")) {
                 @SuppressWarnings("unchecked")
-                List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
-                if (!candidates.isEmpty()) {
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+                if (!choices.isEmpty()) {
                     @SuppressWarnings("unchecked")
-                    Map<String, Object> firstCandidate = candidates.get(0);
+                    Map<String, Object> firstChoice = choices.get(0);
                     @SuppressWarnings("unchecked")
-                    Map<String, Object> contentRes = (Map<String, Object>) firstCandidate.get("content");
-                    @SuppressWarnings("unchecked")
-                    List<Map<String, Object>> partsRes = (List<Map<String, Object>>) contentRes.get("parts");
-                    if (!partsRes.isEmpty()) {
-                        Object textObj = partsRes.get(0).get("text");
-                        String result = textObj != null ? textObj.toString() : "";
-                        return parseAIResult(result.trim());
+                    Map<String, Object> messageRes = (Map<String, Object>) firstChoice.get("message");
+                    
+                    if (messageRes != null && messageRes.containsKey("content")) {
+                        String result = messageRes.get("content").toString();
+                        logger.info("OpenAI API raw response: {}", result);
+                        
+                        // Loại bỏ markdown code blocks nếu có
+                        String cleanedResult = result.replaceAll("```[a-zA-Z]*\\n?", "").replaceAll("```", "").trim();
+                        return parseAIResult(cleanedResult);
                     }
                 }
+            } else if (response != null && response.containsKey("error")) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> errorMap = (Map<String, Object>) response.get("error");
+                String errorMsg = errorMap.get("message") != null ? errorMap.get("message").toString() : "Lỗi không xác định từ OpenAI";
+                logger.error("OpenAI API returned error: {}", errorMsg);
+                return new AIClassificationResponse(WasteType.GENERAL, "0.0", "Lỗi OpenAI: " + errorMsg);
             }
 
         } catch (Exception e) {
-            logger.error("Error calling Gemini API", e);
+            logger.error("Unexpected error in classifyWaste", e);
+            return new AIClassificationResponse(WasteType.GENERAL, "0.0", "Lỗi hệ thống: " + e.getMessage());
         }
 
-        return new AIClassificationResponse(WasteType.GENERAL, "0.0", "Không thể xác định loại rác.");
+        return new AIClassificationResponse(WasteType.GENERAL, "0.0", "Không nhận được phản hồi từ OpenAI.");
     }
 
     private AIClassificationResponse parseAIResult(String result) {
         try {
-            String[] parts = result.split("\\|");
-            if (parts.length >= 3) {
-                WasteType type = WasteType.valueOf(parts[0].trim().toUpperCase());
-                return new AIClassificationResponse(type, parts[1].trim(), parts[2].trim());
-            } else if (parts.length == 1) {
-                for (WasteType type : WasteType.values()) {
-                    if (result.toUpperCase().contains(type.name())) {
-                        return new AIClassificationResponse(type, "0.5", "Kết quả từ AI: " + result);
-                    }
+            // Tìm kiếm định dạng CATEGORY|CONFIDENCE|EXPLANATION trong chuỗi
+            // Đôi khi AI có thể trả về văn bản thừa xung quanh
+            Pattern resultPattern = Pattern.compile("(ORGANIC|RECYCLABLE|HAZARDOUS|GENERAL|ELECTRONIC)\\|([0-9.]+)\\|(.*)", Pattern.CASE_INSENSITIVE);
+            Matcher matcher = resultPattern.matcher(result);
+
+            if (matcher.find()) {
+                WasteType type = WasteType.valueOf(matcher.group(1).trim().toUpperCase());
+                String confidence = matcher.group(2).trim();
+                String explanation = matcher.group(3).trim();
+                return new AIClassificationResponse(type, confidence, explanation);
+            }
+
+            // Nếu không khớp định dạng chuẩn, thử tìm từ khóa loại rác
+            for (WasteType type : WasteType.values()) {
+                if (result.toUpperCase().contains(type.name())) {
+                    return new AIClassificationResponse(type, "0.5", "Kết quả từ AI: " + result);
                 }
             }
         } catch (Exception e) {

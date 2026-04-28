@@ -1,13 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
   BrainCircuit,
   Camera,
+  CheckCircle,
   ChevronDown,
   FileText,
   Leaf,
   LogOut,
   Mail,
+  MapPin,
   Plus,
   RefreshCcw,
   Star,
@@ -36,7 +40,7 @@ const SidebarItem = ({ id, label, icon, active, onClick }) => (
     }}
   >
     {icon}
-    <span style={{ fontSize: '14px' }}>{label}</span>
+    <span className="sidebar-text" style={{ fontSize: '14px' }}>{label}</span>
   </li>
 );
 
@@ -135,6 +139,7 @@ export default function CitizenDashboard() {
   const [error, setError] = useState('');
   const [aiResult, setAiResult] = useState(null);
   const [uploadedAiImage, setUploadedAiImage] = useState(null);
+  const [formStep, setFormStep] = useState(1); // 1: AI/Image, 2: Location/Details, 3: Confirm
   const fileInputRef = useRef(null);
 
   const [newReport, setNewReport] = useState({
@@ -145,6 +150,26 @@ export default function CitizenDashboard() {
     description: '',
     photoUrl: ''
   });
+
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError('Trình duyệt của bạn không hỗ trợ định vị.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setNewReport(prev => ({
+          ...prev,
+          latitude: position.coords.latitude.toFixed(6),
+          longitude: position.coords.longitude.toFixed(6)
+        }));
+      },
+      (err) => {
+        setError('Không thể lấy vị trí: ' + err.message);
+      }
+    );
+  };
 
   const [complaintForm, setComplaintForm] = useState({
     requestId: '',
@@ -259,6 +284,8 @@ export default function CitizenDashboard() {
         photoUrl: ''
       });
       setAiResult(null);
+      setUploadedAiImage(null);
+      setFormStep(1);
       await refreshDashboard();
       setActiveTab('MY_REPORTS');
     } catch (requestError) {
@@ -406,18 +433,89 @@ export default function CitizenDashboard() {
   }[activeTab];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#000', color: '#fff', fontFamily: 'Inter, sans-serif' }}>
+    <div className="dashboard-container" style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#000', color: '#fff', fontFamily: 'Inter, sans-serif' }}>
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          .animate-spin {
+            animation: spin 1s linear infinite;
+          }
+          @media (max-width: 1024px) {
+            .sidebar {
+              width: 80px !important;
+              padding: 24px 8px !important;
+            }
+            .sidebar-text {
+               display: none;
+             }
+            .sidebar-user-info {
+              display: none !important;
+            }
+          }
+          @media (max-width: 768px) {
+            .dashboard-container {
+              flex-direction: column !important;
+            }
+            .sidebar {
+              width: 100% !important;
+              height: auto !important;
+              border-right: none !important;
+              border-bottom: 1px solid #1f1f1f !important;
+              flex-direction: row !important;
+              padding: 12px !important;
+              overflow-x: auto;
+            }
+            .sidebar nav {
+              flex: none !important;
+            }
+            .sidebar ul {
+              flex-direction: row !important;
+              gap: 8px !important;
+            }
+            .sidebar-logo {
+              margin-bottom: 0 !important;
+              margin-right: 20px;
+            }
+            .main-content {
+              padding: 20px !important;
+            }
+            .summary-grid {
+              grid-template-columns: 1fr 1fr !important;
+            }
+          }
+          @media (max-width: 480px) {
+            .summary-grid {
+              grid-template-columns: 1fr !important;
+            }
+            .form-step-container {
+               padding: 24px !important;
+             }
+             .location-grid {
+               grid-template-columns: 1fr !important;
+             }
+          }
+        `}
+      </style>
       <div
+        className="sidebar"
         style={{
           width: '260px',
           background: '#0a0a0a',
           borderRight: '1px solid #1f1f1f',
           display: 'flex',
           flexDirection: 'column',
-          padding: '24px 16px'
+          padding: '24px 16px',
+          transition: 'all 0.3s ease'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px', padding: '0 8px' }}>
+        <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px', padding: '0 8px' }}>
           <div style={{ background: '#22c55e', padding: '8px', borderRadius: '10px' }}>
             <Leaf size={24} color="black" fill="black" />
           </div>
@@ -440,7 +538,7 @@ export default function CitizenDashboard() {
           </ul>
         </nav>
 
-        <div style={{ marginTop: 'auto', borderTop: '1px solid #1f1f1f', paddingTop: '24px' }}>
+        <div className="sidebar-user-info" style={{ marginTop: 'auto', borderTop: '1px solid #1f1f1f', paddingTop: '24px' }}>
           <div style={{ padding: '0 16px 16px', color: '#888', fontSize: '13px' }}>
             <div style={{ color: '#fff', fontWeight: '600', marginBottom: '4px' }}>{summary?.fullName || user?.email || 'Người dùng'}</div>
             <div>{summary?.email || user?.username || ''}</div>
@@ -467,8 +565,8 @@ export default function CitizenDashboard() {
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '32px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', gap: '16px' }}>
+      <div className="main-content" style={{ flex: 1, overflowY: 'auto', padding: '32px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', gap: '16px', flexWrap: 'wrap' }}>
           <div>
             <h1 style={{ margin: 0, fontSize: '28px' }}>{contentTitle}</h1>
             <div style={{ color: '#888', marginTop: '8px', fontSize: '14px' }}>
@@ -512,7 +610,7 @@ export default function CitizenDashboard() {
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+        <div className="summary-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
           <SummaryCard label="Tổng báo cáo" value={summary?.totalRequests ?? reports.length} accent="#22c55e" />
           <SummaryCard label="Điểm tích lũy" value={summary?.totalPoints ?? 0} accent="#fbbf24" />
           <SummaryCard label="Khiếu nại đang mở" value={summary?.openComplaints ?? complaints.filter((item) => item.status === 'OPEN').length} accent="#f87171" />
@@ -616,187 +714,733 @@ export default function CitizenDashboard() {
         )}
 
         {!loading && activeTab === 'CREATE_NEW' && (
-          <div style={{ maxWidth: '760px' }}>
-            <form onSubmit={handleCreateReport} style={{ display: 'grid', gap: '24px' }}>
-              <div style={{ background: '#111', borderRadius: '16px', padding: '20px', border: '1px solid #1f1f1f' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', color: '#22c55e', fontSize: '14px', fontWeight: '600' }}>
-                  <BrainCircuit size={18} />
-                  AI hỗ trợ phân loại rác
+          <div style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '40px' }}>
+            {/* Progress Bar */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              marginBottom: '48px', 
+              position: 'relative', 
+              padding: '0 40px' 
+            }}>
+              <div style={{ 
+                position: 'absolute', 
+                top: '20px', 
+                left: '60px', 
+                right: '60px', 
+                height: '4px', 
+                background: '#1a1a1a', 
+                borderRadius: '2px',
+                zIndex: 0 
+              }}>
+                <div style={{ 
+                  width: `${((formStep - 1) / 2) * 100}%`, 
+                  height: '100%', 
+                  background: 'linear-gradient(90deg, #22c55e, #4ade80)', 
+                  borderRadius: '2px',
+                  transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: '0 0 15px rgba(34, 197, 94, 0.4)'
+                }}></div>
+              </div>
+              
+              {[
+                { step: 1, label: 'Hình ảnh', icon: <Camera size={18} /> },
+                { step: 2, label: 'Vị trí', icon: <MapPin size={18} /> },
+                { step: 3, label: 'Hoàn tất', icon: <CheckCircle size={18} /> }
+              ].map((item) => (
+                <div key={item.step} style={{ 
+                  position: 'relative', 
+                  zIndex: 1, 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  gap: '12px' 
+                }}>
+                  <div style={{ 
+                    width: '44px', 
+                    height: '44px', 
+                    borderRadius: '14px', 
+                    background: formStep >= item.step ? '#22c55e' : '#111', 
+                    color: formStep >= item.step ? '#000' : '#444',
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    border: formStep >= item.step ? 'none' : '2px solid #1f1f1f',
+                    transform: formStep === item.step ? 'scale(1.1) rotate(0deg)' : 'scale(1)',
+                    boxShadow: formStep === item.step ? '0 0 20px rgba(34, 197, 94, 0.3)' : 'none',
+                    transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                  }}>
+                    {formStep > item.step ? <CheckCircle size={22} /> : item.icon}
+                  </div>
+                  <span style={{ 
+                    fontSize: '13px', 
+                    color: formStep >= item.step ? '#fff' : '#444', 
+                    fontWeight: formStep >= item.step ? '700' : '500',
+                    transition: 'all 0.3s ease'
+                  }}>
+                    {item.label}
+                  </span>
                 </div>
-                <div style={{ display: 'grid', gap: '14px' }}>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg,image/webp"
-                    onChange={handleAiImageChange}
-                    style={{ display: 'none' }}
-                  />
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    style={{
-                      background: '#0a0a0a',
-                      border: '1px dashed #22c55e50',
-                      borderRadius: '12px',
-                      padding: '20px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '16px',
-                      flexWrap: 'wrap'
-                    }}
-                  >
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#10331b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22c55e' }}>
-                        <Upload size={18} />
+              ))}
+            </div>
+
+            <form onSubmit={handleCreateReport} style={{ display: 'grid', gap: '24px' }}>
+              {/* Step 1: AI Analysis & Image */}
+              {formStep === 1 && (
+                <div className="form-step-container" style={{ 
+                  animation: 'fadeIn 0.5s ease-out',
+                  background: 'linear-gradient(165deg, #111 0%, #0a0a0a 100%)', 
+                  borderRadius: '28px', 
+                  padding: '36px', 
+                  border: '1px solid #1f1f1f',
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.8)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{ background: 'rgba(34, 197, 94, 0.1)', padding: '10px', borderRadius: '12px' }}>
+                        <BrainCircuit size={28} color="#22c55e" />
                       </div>
                       <div>
-                        <div style={{ color: '#fff', fontWeight: '600' }}>
-                          {uploadedAiImage?.name || 'Tải ảnh rác lên để AI phân tích'}
-                        </div>
-                        <div style={{ color: '#888', fontSize: '13px' }}>PNG, JPG, JPEG, WebP tối đa 5MB</div>
+                        <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#fff' }}>AI Phân tích rác thải</h3>
+                        <p style={{ margin: '4px 0 0', color: '#666', fontSize: '14px' }}>Sử dụng trí tuệ nhân tạo để tự động nhận diện</p>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      style={{ background: 'transparent', border: '1px solid #22c55e', color: '#22c55e', padding: '8px 14px', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }}
-                    >
-                      Chọn ảnh
-                    </button>
                   </div>
-                  {uploadedAiImage ? (
-                    <div style={{ background: '#0a0a0a', border: '1px solid #1f1f1f', borderRadius: '12px', padding: '16px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
-                        <div style={{ color: '#22c55e', fontWeight: '700' }}>Ảnh dùng cho AI phân tích</div>
-                        <button
-                          type="button"
-                          onClick={clearUploadedAiImage}
-                          style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+
+                  <div style={{ display: 'grid', gap: '28px' }}>
+                    {/* Upload Image Area */}
+                    {!uploadedAiImage ? (
+                      <div
+                        onClick={() => fileInputRef.current?.click()}
+                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#22c55e'; e.currentTarget.style.background = '#0a150e'; }}
+                        onDragLeave={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#1d3521'; e.currentTarget.style.background = '#050505'; }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const file = e.dataTransfer.files[0];
+                          if (file) {
+                            const event = { target: { files: [file] } };
+                            handleAiImageChange(event);
+                          }
+                        }}
+                        style={{
+                          background: '#050505',
+                          border: '2px dashed #1d3521',
+                          borderRadius: '24px',
+                          padding: '60px 20px',
+                          cursor: 'pointer',
+                          textAlign: 'center',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                        }}
+                      >
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAiImageChange}
+                          style={{ display: 'none' }}
+                        />
+                        <div style={{ 
+                          width: '80px', 
+                          height: '80px', 
+                          borderRadius: '24px', 
+                          background: 'rgba(34, 197, 94, 0.1)', 
+                          color: '#22c55e', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          margin: '0 auto 24px',
+                          transform: 'rotate(-5deg)',
+                          transition: 'all 0.3s ease'
+                        }}>
+                          <Upload size={36} />
+                        </div>
+                        <div style={{ color: '#fff', fontWeight: '800', fontSize: '20px', marginBottom: '10px' }}>Tải ảnh rác thải lên</div>
+                        <div style={{ color: '#666', fontSize: '15px', maxWidth: '300px', margin: '0 auto' }}>Kéo thả ảnh vào đây hoặc nhấn để chọn file từ thiết bị</div>
+                      </div>
+                    ) : (
+                      <div style={{ position: 'relative', borderRadius: '24px', overflow: 'hidden', border: '1px solid #1f1f1f', boxShadow: '0 15px 40px rgba(0,0,0,0.5)' }}>
+                        <img 
+                          src={uploadedAiImage.dataUrl} 
+                          alt="ai-upload" 
+                          style={{ width: '100%', maxHeight: '450px', objectFit: 'cover', display: 'block' }} 
+                        />
+                        <div style={{ 
+                          position: 'absolute', 
+                          top: '20px', 
+                          right: '20px', 
+                          display: 'flex', 
+                          gap: '10px' 
+                        }}>
+                          <button
+                            type="button"
+                            onClick={clearUploadedAiImage}
+                            style={{ 
+                              background: 'rgba(239, 68, 68, 0.95)', 
+                              backdropFilter: 'blur(10px)',
+                              border: 'none', 
+                              color: '#fff', 
+                              padding: '12px', 
+                              borderRadius: '14px', 
+                              cursor: 'pointer',
+                              boxShadow: '0 8px 20px rgba(239, 68, 68, 0.3)',
+                              transition: 'transform 0.2s'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                          >
+                            <X size={22} />
+                          </button>
+                        </div>
+                        <div style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
+                          padding: '30px 20px 20px',
+                          color: '#fff',
+                          fontSize: '14px',
+                          fontWeight: '600'
+                        }}>
+                          Đã chọn: {uploadedAiImage.file.name}
+                        </div>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'grid', gap: '14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <FileText size={18} color="#22c55e" />
+                        <label style={{ color: '#888', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>Mô tả chi tiết</label>
+                      </div>
+                      <textarea
+                        value={newReport.description}
+                        onChange={(event) => setNewReport((previous) => ({ ...previous, description: event.target.value }))}
+                        placeholder="Mô tả cụ thể về rác thải, khối lượng hoặc tình trạng... (VD: 3 bao tải rác xây dựng tràn ra vỉa hè)"
+                        style={{ 
+                          width: '100%', 
+                          background: '#050505', 
+                          border: '1px solid #1f1f1f', 
+                          color: '#fff', 
+                          padding: '20px', 
+                          borderRadius: '20px', 
+                          minHeight: '140px',
+                          outline: 'none',
+                          fontSize: '16px',
+                          lineHeight: '1.6',
+                          transition: 'all 0.3s ease'
+                        }}
+                        onFocus={(e) => { 
+                          e.target.style.borderColor = '#22c55e'; 
+                          e.target.style.background = '#0a0a0a';
+                          e.target.style.boxShadow = '0 0 0 4px rgba(34, 197, 94, 0.1)'; 
+                        }}
+                        onBlur={(e) => { 
+                          e.target.style.borderColor = '#1f1f1f'; 
+                          e.target.style.background = '#050505';
+                          e.target.style.boxShadow = 'none'; 
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      <button
+                        type="button"
+                        onClick={handleAIClassify}
+                        disabled={aiLoading || !uploadedAiImage}
+                        style={{ 
+                          background: aiLoading ? '#1a1a1a' : (uploadedAiImage ? '#22c55e' : '#1a1a1a'), 
+                          color: aiLoading ? '#444' : (uploadedAiImage ? '#000' : '#444'), 
+                          border: 'none', 
+                          padding: '20px 30px', 
+                          borderRadius: '20px', 
+                          fontWeight: '900', 
+                          fontSize: '18px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '12px',
+                          cursor: (aiLoading || !uploadedAiImage) ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                          boxShadow: (uploadedAiImage && !aiLoading) ? '0 10px 25px rgba(34, 197, 94, 0.3)' : 'none'
+                        }}
+                        onMouseEnter={(e) => { if(!aiLoading && uploadedAiImage) { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 15px 30px rgba(34, 197, 94, 0.4)'; } }}
+                        onMouseLeave={(e) => { if(!aiLoading && uploadedAiImage) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 10px 25px rgba(34, 197, 94, 0.3)'; } }}
+                      >
+                        {aiLoading ? <RefreshCcw size={24} className="animate-spin" /> : <BrainCircuit size={24} />}
+                        {aiLoading ? 'Đang phân tích...' : 'Phân tích loại rác ngay'}
+                      </button>
+
+                      {aiResult && (
+                        <div style={{ 
+                          background: 'rgba(34, 197, 94, 0.05)', 
+                          border: '1px solid rgba(34, 197, 94, 0.2)', 
+                          borderRadius: '24px', 
+                          padding: '28px',
+                          animation: 'slideUp 0.5s ease-out'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <div style={{ background: '#22c55e', color: '#000', padding: '8px', borderRadius: '10px' }}>
+                                <CheckCircle size={20} />
+                              </div>
+                              <div>
+                                <div style={{ color: '#888', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase' }}>Kết quả dự đoán</div>
+                                <div style={{ color: '#22c55e', fontWeight: '900', fontSize: '20px' }}>{formatWasteType(aiResult.wasteType)}</div>
+                              </div>
+                            </div>
+                            <div style={{ 
+                              background: '#10331b', 
+                              color: '#22c55e', 
+                              padding: '8px 16px', 
+                              borderRadius: '12px', 
+                              fontSize: '14px', 
+                              fontWeight: '800',
+                              border: '1px solid rgba(34, 197, 94, 0.2)'
+                            }}>
+                              Độ tin cậy: {Math.round((parseFloat(aiResult.confidence) || 0) * 100)}%
+                            </div>
+                          </div>
+                          <div style={{ 
+                            background: 'rgba(0,0,0,0.3)', 
+                            padding: '16px', 
+                            borderRadius: '16px', 
+                            color: '#d1d5db', 
+                            fontSize: '15px', 
+                            lineHeight: '1.6',
+                            border: '1px solid rgba(255,255,255,0.05)'
+                          }}>
+                            {aiResult.explanation}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setFormStep(2)}
+                        disabled={!uploadedAiImage}
+                        style={{
+                          background: uploadedAiImage ? '#1a1a1a' : '#0a0a0a',
+                          color: uploadedAiImage ? '#fff' : '#333',
+                          border: '1px solid #333',
+                          borderRadius: '16px',
+                          padding: '16px 32px',
+                          fontWeight: '700',
+                          fontSize: '16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          cursor: uploadedAiImage ? 'pointer' : 'not-allowed',
+                          transition: 'all 0.3s ease'
+                        }}
+                        onMouseEnter={(e) => { if(uploadedAiImage) { e.currentTarget.style.borderColor = '#22c55e'; e.currentTarget.style.color = '#22c55e'; } }}
+                        onMouseLeave={(e) => { if(uploadedAiImage) { e.currentTarget.style.borderColor = '#333'; e.currentTarget.style.color = '#fff'; } }}
+                      >
+                        Tiếp theo: Vị trí
+                        <ArrowRight size={20} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Location & Details */}
+              {formStep === 2 && (
+                <div className="form-step-container" style={{ 
+                  animation: 'fadeIn 0.5s ease-out',
+                  background: 'linear-gradient(165deg, #111 0%, #0a0a0a 100%)', 
+                  borderRadius: '28px', 
+                  padding: '36px', 
+                  border: '1px solid #1f1f1f',
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
+                  display: 'grid', 
+                  gap: '32px' 
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ background: 'rgba(34, 197, 94, 0.1)', padding: '10px', borderRadius: '12px' }}>
+                      <MapPin size={28} color="#22c55e" />
+                    </div>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#fff' }}>Thông tin địa điểm</h3>
+                      <p style={{ margin: '4px 0 0', color: '#666', fontSize: '14px' }}>Cung cấp vị trí chính xác để nhân viên đến thu gom</p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gap: '32px' }}>
+                    {/* Waste Type Selection */}
+                    <div style={{ display: 'grid', gap: '14px' }}>
+                      <label style={{ color: '#888', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>Loại rác thải</label>
+                      <div style={{ position: 'relative' }}>
+                        <select
+                          value={newReport.wasteType}
+                          onChange={(event) => setNewReport((previous) => ({ ...previous, wasteType: event.target.value }))}
+                          style={{
+                            width: '100%',
+                            background: '#050505',
+                            border: '1px solid #1f1f1f',
+                            color: '#fff',
+                            padding: '20px',
+                            borderRadius: '20px',
+                            appearance: 'none',
+                            outline: 'none',
+                            fontSize: '16px',
+                            transition: 'all 0.3s ease',
+                            cursor: 'pointer'
+                          }}
+                          onFocus={(e) => { e.target.style.borderColor = '#22c55e'; e.target.style.boxShadow = '0 0 0 4px rgba(34, 197, 94, 0.1)'; }}
+                          onBlur={(e) => { e.target.style.borderColor = '#1f1f1f'; e.target.style.boxShadow = 'none'; }}
                         >
-                          <X size={16} />
-                          Bỏ ảnh
+                          <option value="ORGANIC">🥬 Hữu cơ (Thức ăn thừa, rau củ...)</option>
+                          <option value="RECYCLABLE">♻️ Tái chế (Chai lọ, giấy, kim loại...)</option>
+                          <option value="HAZARDOUS">⚠️ Nguy hại (Pin, bóng đèn, hóa chất...)</option>
+                          <option value="GENERAL">🗑️ Rác sinh hoạt khác</option>
+                          <option value="ELECTRONIC">💻 Điện tử (Máy tính, điện thoại...)</option>
+                        </select>
+                        <ChevronDown size={20} style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', color: '#666', pointerEvents: 'none' }} />
+                      </div>
+                    </div>
+
+                    {/* Location Details */}
+                    <div style={{ display: 'grid', gap: '14px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label style={{ color: '#888', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>Vị trí thu gom</label>
+                        <button 
+                          type="button" 
+                          onClick={getCurrentLocation}
+                          style={{ 
+                            background: 'rgba(34, 197, 94, 0.1)', 
+                            color: '#22c55e', 
+                            border: '1px solid rgba(34, 197, 94, 0.2)', 
+                            padding: '10px 18px', 
+                            borderRadius: '14px', 
+                            fontSize: '13px', 
+                            fontWeight: '800',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(34, 197, 94, 0.2)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(34, 197, 94, 0.1)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                        >
+                          <MapPin size={16} />
+                          Lấy vị trí hiện tại
                         </button>
                       </div>
-                      <img src={uploadedAiImage.dataUrl} alt="ai-upload" style={{ width: '100%', maxHeight: '260px', objectFit: 'cover', borderRadius: '12px' }} />
-                    </div>
-                  ) : null}
-                  <textarea
-                    value={newReport.description}
-                    onChange={(event) => setNewReport((previous) => ({ ...previous, description: event.target.value }))}
-                    placeholder="Mô tả loại rác, số lượng, tình trạng..."
-                    style={{ width: '100%', background: '#0a0a0a', border: '1px solid #1f1f1f', color: '#fff', padding: '12px 16px', borderRadius: '10px', minHeight: '100px' }}
-                  />
-                  <input
-                    value={newReport.photoUrl}
-                    onChange={(event) => setNewReport((previous) => ({ ...previous, photoUrl: event.target.value }))}
-                    placeholder="Hoặc dán URL ảnh để lưu cùng báo cáo"
-                    style={{ width: '100%', background: '#0a0a0a', border: '1px solid #1f1f1f', color: '#fff', padding: '12px 16px', borderRadius: '10px' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAIClassify}
-                    disabled={aiLoading}
-                    style={{ background: 'transparent', border: '1px solid #22c55e', color: '#22c55e', padding: '10px 16px', borderRadius: '10px', fontWeight: '700', width: 'fit-content', cursor: 'pointer' }}
-                  >
-                    {aiLoading ? 'Đang phân tích...' : 'Gợi ý bằng AI'}
-                  </button>
-                  {aiResult ? (
-                    <div style={{ background: '#0a0a0a', border: '1px solid #1f1f1f', borderRadius: '12px', padding: '16px' }}>
-                      <div style={{ color: '#22c55e', fontWeight: '700', marginBottom: '8px' }}>
-                        Gợi ý: {formatWasteType(aiResult.wasteType)}
-                      </div>
-                      <div style={{ color: '#d1d5db', fontSize: '14px', marginBottom: '6px' }}>
-                        Độ tin cậy: {aiResult.confidence || '0'}
-                      </div>
-                      <div style={{ color: '#888', fontSize: '14px' }}>{aiResult.explanation}</div>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
 
-              <div style={{ background: '#111', borderRadius: '16px', padding: '20px', border: '1px solid #1f1f1f', display: 'grid', gap: '16px' }}>
-                <div>
-                  <label style={{ display: 'block', color: '#888', fontSize: '14px', marginBottom: '8px' }}>Loại rác</label>
-                  <div style={{ position: 'relative' }}>
-                    <select
-                      value={newReport.wasteType}
-                      onChange={(event) => setNewReport((previous) => ({ ...previous, wasteType: event.target.value }))}
+                      <div className="location-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                        <div style={{ position: 'relative' }}>
+                          <input
+                            placeholder="Vĩ độ (Latitude)"
+                            value={newReport.latitude}
+                            onChange={(event) => setNewReport((previous) => ({ ...previous, latitude: event.target.value }))}
+                            style={{ 
+                              width: '100%', 
+                              background: '#050505', 
+                              border: '1px solid #1f1f1f', 
+                              color: '#fff', 
+                              padding: '20px', 
+                              borderRadius: '20px', 
+                              outline: 'none',
+                              fontSize: '16px',
+                              transition: 'all 0.3s ease'
+                            }}
+                            onFocus={(e) => { e.target.style.borderColor = '#22c55e'; e.target.style.boxShadow = '0 0 0 4px rgba(34, 197, 94, 0.1)'; }}
+                            onBlur={(e) => { e.target.style.borderColor = '#1f1f1f'; e.target.style.boxShadow = 'none'; }}
+                          />
+                        </div>
+                        <div style={{ position: 'relative' }}>
+                          <input
+                            placeholder="Kinh độ (Longitude)"
+                            value={newReport.longitude}
+                            onChange={(event) => setNewReport((previous) => ({ ...previous, longitude: event.target.value }))}
+                            style={{ 
+                              width: '100%', 
+                              background: '#050505', 
+                              border: '1px solid #1f1f1f', 
+                              color: '#fff', 
+                              padding: '20px', 
+                              borderRadius: '20px', 
+                              outline: 'none',
+                              fontSize: '16px',
+                              transition: 'all 0.3s ease'
+                            }}
+                            onFocus={(e) => { e.target.style.borderColor = '#22c55e'; e.target.style.boxShadow = '0 0 0 4px rgba(34, 197, 94, 0.1)'; }}
+                            onBlur={(e) => { e.target.style.borderColor = '#1f1f1f'; e.target.style.boxShadow = 'none'; }}
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ position: 'relative' }}>
+                        <textarea
+                          value={newReport.addressText}
+                          onChange={(event) => setNewReport((previous) => ({ ...previous, addressText: event.target.value }))}
+                          placeholder="Nhập địa chỉ cụ thể hoặc mô tả điểm đánh dấu (VD: Đầu ngõ 123, cạnh cột điện...)"
+                          style={{ 
+                            width: '100%', 
+                            background: '#050505', 
+                            border: '1px solid #1f1f1f', 
+                            color: '#fff', 
+                            padding: '20px', 
+                            borderRadius: '20px', 
+                            outline: 'none', 
+                            fontSize: '16px',
+                            minHeight: '100px',
+                            lineHeight: '1.6',
+                            transition: 'all 0.3s ease'
+                          }}
+                          onFocus={(e) => { e.target.style.borderColor = '#22c55e'; e.target.style.boxShadow = '0 0 0 4px rgba(34, 197, 94, 0.1)'; }}
+                          onBlur={(e) => { e.target.style.borderColor = '#1f1f1f'; e.target.style.boxShadow = 'none'; }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', gap: '20px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setFormStep(1)}
                       style={{
-                        width: '100%',
-                        background: '#0a0a0a',
-                        border: '1px solid #1f1f1f',
+                        flex: 1,
+                        background: 'transparent',
+                        color: '#888',
+                        border: '1px solid #333',
+                        borderRadius: '20px',
+                        padding: '18px 24px',
+                        fontWeight: '700',
+                        fontSize: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#666'; e.currentTarget.style.color = '#fff'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#333'; e.currentTarget.style.color = '#888'; }}
+                    >
+                      <ArrowLeft size={20} />
+                      Quay lại
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormStep(3)}
+                      style={{
+                        flex: 2,
+                        background: '#1a1a1a',
                         color: '#fff',
-                        padding: '12px 16px',
-                        borderRadius: '10px',
-                        appearance: 'none'
+                        border: '1px solid #333',
+                        borderRadius: '20px',
+                        padding: '18px 32px',
+                        fontWeight: '800',
+                        fontSize: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#22c55e'; e.currentTarget.style.color = '#22c55e'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#333'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                    >
+                      Kiểm tra tóm tắt
+                      <ArrowRight size={20} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Confirmation */}
+              {formStep === 3 && (
+                <div className="form-step-container" style={{ 
+                  animation: 'fadeIn 0.5s ease-out',
+                  background: 'linear-gradient(165deg, #111 0%, #0a0a0a 100%)', 
+                  borderRadius: '28px', 
+                  padding: '36px', 
+                  border: '1px solid #1f1f1f',
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
+                  display: 'grid', 
+                  gap: '32px' 
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ background: 'rgba(34, 197, 94, 0.1)', padding: '10px', borderRadius: '12px' }}>
+                      <CheckCircle size={28} color="#22c55e" />
+                    </div>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#fff' }}>Xác nhận thông tin</h3>
+                      <p style={{ margin: '4px 0 0', color: '#666', fontSize: '14px' }}>Vui lòng kiểm tra kỹ trước khi gửi yêu cầu</p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gap: '24px' }}>
+                    <div style={{ 
+                      background: '#050505', 
+                      borderRadius: '24px', 
+                      padding: '28px', 
+                      border: '1px solid #1f1f1f',
+                      display: 'grid',
+                      gap: '24px'
+                    }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+                        <div style={{ display: 'grid', gap: '8px' }}>
+                          <div style={{ color: '#888', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>Loại rác thải</div>
+                          <div style={{ 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            gap: '10px',
+                            background: 'rgba(34, 197, 94, 0.1)',
+                            color: '#22c55e',
+                            padding: '10px 16px',
+                            borderRadius: '12px',
+                            fontWeight: '700',
+                            width: 'fit-content'
+                          }}>
+                            {newReport.wasteType === 'ORGANIC' && '🥬'}
+                            {newReport.wasteType === 'RECYCLABLE' && '♻️'}
+                            {newReport.wasteType === 'HAZARDOUS' && '⚠️'}
+                            {newReport.wasteType === 'GENERAL' && '🗑️'}
+                            {newReport.wasteType === 'ELECTRONIC' && '💻'}
+                            {formatWasteType(newReport.wasteType)}
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gap: '8px' }}>
+                          <div style={{ color: '#888', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>Tọa độ</div>
+                          <div style={{ color: '#fff', fontSize: '15px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <MapPin size={16} color="#666" />
+                            {newReport.latitude}, {newReport.longitude}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ borderTop: '1px solid #1f1f1f', paddingTop: '24px', display: 'grid', gap: '24px' }}>
+                        <div style={{ display: 'grid', gap: '8px' }}>
+                          <div style={{ color: '#888', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>Địa chỉ chi tiết</div>
+                          <div style={{ color: '#fff', fontSize: '16px', lineHeight: '1.6', fontWeight: '500' }}>
+                            {newReport.addressText || 'Chưa cung cấp địa chỉ cụ thể'}
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gap: '8px' }}>
+                          <div style={{ color: '#888', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>Mô tả bổ sung</div>
+                          <div style={{ color: '#aaa', fontSize: '15px', lineHeight: '1.6', fontStyle: newReport.description ? 'normal' : 'italic' }}>
+                            {newReport.description || 'Không có mô tả thêm'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {(uploadedAiImage || newReport.photoUrl) && (
+                      <div style={{ 
+                        borderRadius: '24px', 
+                        overflow: 'hidden', 
+                        border: '1px solid #1f1f1f',
+                        position: 'relative',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                      }}>
+                        <img 
+                          src={uploadedAiImage?.dataUrl || newReport.photoUrl} 
+                          alt="preview" 
+                          style={{ width: '100%', maxHeight: '250px', objectFit: 'cover' }} 
+                        />
+                        <div style={{ 
+                          position: 'absolute', 
+                          top: '16px', 
+                          left: '16px', 
+                          background: 'rgba(0,0,0,0.6)', 
+                          backdropFilter: 'blur(8px)',
+                          padding: '8px 14px', 
+                          borderRadius: '10px',
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          color: '#fff',
+                          border: '1px solid rgba(255,255,255,0.1)'
+                        }}>
+                          Hình ảnh hiện trường
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '12px' }}>
+                    <button
+                      type="submit"
+                      disabled={submittingReport}
+                      style={{
+                        background: '#22c55e',
+                        color: '#000',
+                        border: 'none',
+                        borderRadius: '22px',
+                        padding: '22px',
+                        fontSize: '18px',
+                        fontWeight: '900',
+                        cursor: submittingReport ? 'not-allowed' : 'pointer',
+                        boxShadow: '0 12px 30px rgba(34, 197, 94, 0.3)',
+                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '12px'
+                      }}
+                      onMouseEnter={(e) => { 
+                        if (!submittingReport) {
+                          e.currentTarget.style.transform = 'translateY(-4px)'; 
+                          e.currentTarget.style.boxShadow = '0 15px 40px rgba(34, 197, 94, 0.4)';
+                          e.currentTarget.style.background = '#2ae06d';
+                        }
+                      }}
+                      onMouseLeave={(e) => { 
+                        if (!submittingReport) {
+                          e.currentTarget.style.transform = 'translateY(0)'; 
+                          e.currentTarget.style.boxShadow = '0 12px 30px rgba(34, 197, 94, 0.3)';
+                          e.currentTarget.style.background = '#22c55e';
+                        }
                       }}
                     >
-                      <option value="ORGANIC">Hữu cơ</option>
-                      <option value="RECYCLABLE">Tái chế</option>
-                      <option value="HAZARDOUS">Nguy hại</option>
-                      <option value="GENERAL">Rác sinh hoạt</option>
-                      <option value="ELECTRONIC">Điện tử</option>
-                    </select>
-                    <ChevronDown size={18} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                      {submittingReport ? (
+                        <>
+                          <RefreshCcw size={24} className="animate-spin" />
+                          Đang xử lý dữ liệu...
+                        </>
+                      ) : (
+                        <>
+                          Xác nhận & Gửi yêu cầu ngay
+                          <ArrowRight size={22} />
+                        </>
+                      )}
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setFormStep(2)}
+                      style={{
+                        background: 'transparent',
+                        color: '#666',
+                        border: 'none',
+                        padding: '12px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        fontSize: '15px',
+                        transition: 'all 0.3s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = '#fff'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; }}
+                    >
+                      <ArrowLeft size={16} />
+                      Quay lại chỉnh sửa thông tin
+                    </button>
                   </div>
                 </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '16px' }}>
-                  <div>
-                    <label style={{ display: 'block', color: '#888', fontSize: '14px', marginBottom: '8px' }}>Vĩ độ</label>
-                    <input
-                      value={newReport.latitude}
-                      onChange={(event) => setNewReport((previous) => ({ ...previous, latitude: event.target.value }))}
-                      style={{ width: '100%', background: '#0a0a0a', border: '1px solid #1f1f1f', color: '#fff', padding: '12px 16px', borderRadius: '10px' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', color: '#888', fontSize: '14px', marginBottom: '8px' }}>Kinh độ</label>
-                    <input
-                      value={newReport.longitude}
-                      onChange={(event) => setNewReport((previous) => ({ ...previous, longitude: event.target.value }))}
-                      style={{ width: '100%', background: '#0a0a0a', border: '1px solid #1f1f1f', color: '#fff', padding: '12px 16px', borderRadius: '10px' }}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', color: '#888', fontSize: '14px', marginBottom: '8px' }}>Địa chỉ chi tiết</label>
-                  <input
-                    value={newReport.addressText}
-                    onChange={(event) => setNewReport((previous) => ({ ...previous, addressText: event.target.value }))}
-                    placeholder="Ví dụ: 123 Nguyễn Huệ, Quận 1"
-                    style={{ width: '100%', background: '#0a0a0a', border: '1px solid #1f1f1f', color: '#fff', padding: '12px 16px', borderRadius: '10px' }}
-                  />
-                </div>
-
-                {newReport.photoUrl ? (
-                  <div style={{ background: '#0a0a0a', border: '1px solid #1f1f1f', borderRadius: '12px', padding: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#22c55e', marginBottom: '10px' }}>
-                      <Camera size={16} />
-                      Ảnh xem trước
-                    </div>
-                    <img src={newReport.photoUrl} alt="preview" style={{ width: '100%', maxHeight: '260px', objectFit: 'cover', borderRadius: '12px' }} />
-                  </div>
-                ) : null}
-
-                <button
-                  type="submit"
-                  disabled={submittingReport}
-                  style={{
-                    background: '#22c55e',
-                    color: '#000',
-                    border: 'none',
-                    borderRadius: '12px',
-                    padding: '16px',
-                    fontSize: '16px',
-                    fontWeight: '700',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {submittingReport ? 'Đang gửi...' : 'Gửi yêu cầu thu gom'}
-                </button>
-              </div>
+              )}
             </form>
           </div>
         )}
